@@ -19,13 +19,13 @@ byte pp[2] = {2, 3};
 
 byte start = 0;
 
-const unsigned long circle = (unsigned long)(3.14f * 300.0f); // длина окружности барабана mm
-const unsigned long distance = 4UL * 1000UL; //402UL * 1000UL; // дистанция пробега mm
+const unsigned long circle = (unsigned long)(3.1416926f * 108.0f); // длина окружности барабана mm
+const unsigned long distance = 402UL * 1000UL; //402UL * 1000UL; // дистанция пробега mm
 const unsigned long rotations = distance / circle; // оборотов до финиша
 
 unsigned long idleTime = 0;
 
-SmartDelay disp(250000UL);
+SmartDelay disp(250*1000UL);
 
 class Baton : public SmartButton {
   public:
