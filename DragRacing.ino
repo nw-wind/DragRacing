@@ -78,7 +78,11 @@ void setup() {
     pinMode(pp[i], INPUT_PULLUP);
   }
   pinMode(INDICATOR, OUTPUT);
-  for (int i=0; i<3; i++) pinMode(colors[i],OUTPUT);
+  digitalWrite(INDICATOR,LOW);
+  for (int i=0; i<3; i++) {
+    pinMode(colors[i],OUTPUT);
+    digitalWrite(colors[i],LOW);
+  }
   attachInterrupt(digitalPinToInterrupt(pp[0]), getInt0, RISING);
   attachInterrupt(digitalPinToInterrupt(pp[1]), getInt1, RISING);
   Serial.println("READY");
@@ -119,13 +123,23 @@ void loop() {
   if (toGo>0 && toGo<=3 && toStart.Now()) {
     Serial << "toGo=" << toGo << endl;
     digitalWrite(colors[toGo-1],HIGH);
-    Serial << toGo-1 << " HIGH" << endl;
+    Serial << "LIGHT " << toGo-1 << endl;
+    //Serial << toGo-1 << " HIGH" << endl;
     if (toGo>1) {
       digitalWrite(colors[toGo-2],LOW);
-      Serial << toGo-2 << " LOW" << endl;
+      //Serial << toGo-2 << " LOW" << endl;
     }
     toGo++;
-    if (toGo==4) start=1;
+    if (toGo==4) {
+      start=1;
+      idleTime = millis();
+      // Проверка фальстарта
+      for (int i=0; i< PLAYERS; i++) {
+        if (pl[i].c !=0) {
+          Serial << "FALSE " << i << endl;
+        }
+      }
+    }
   }
 }
 
