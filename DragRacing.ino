@@ -135,7 +135,7 @@ void loop() {
       idleTime = millis();
       // Проверка фальстарта
       for (int i=0; i< PLAYERS; i++) {
-        if (pl[i].c !=0) {
+        if (pl[i].c > 1) {
           Serial << "FALSE " << i << endl;
         }
       }
