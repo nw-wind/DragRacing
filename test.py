@@ -8,6 +8,12 @@ import time
 import re
 import codecs
 
+def BclearCallBack():
+	SleftVar=SrightVar=0
+	Sleft.set(SleftVar)
+	Sright.set(SrightVar)
+
+
 def BexitCallBack():
 	exit()
 
@@ -28,67 +34,103 @@ def readSerial():
 		if m:
 			pA=m.group(1,2)
 			pB=m.group(3,4)
-			leftText.set("%03d.%03d" % (int(pA[0])/1000,int(pA[0])%1000))
+			global lastTimeA, lastTimeB,lastDistA, lastDistB
+			global upRightTextS,upLeftTextS,Sleft,Sright,leftText,rightText
 			if pA[1] == 'FINISH':
 				SleftVar=402
+				upLeftTextS.set(u"FINISH")
 				# finish
 			else:
-			 	SleftVar=pA[1]
-			rightText.set("%03d.%03d" % (int(pB[0])/1000,int(pB[0])%1000))
+				speedA=float(int(pA[1])-lastDistA)/float(int(pA[0])-lastTimeA)*3.6
+				print "Speed A = "+str(speedA)+" "+str(lastDistA)+" "+str(lastTimeA)
+				leftText.set("%03d.%03d %.1f" % ( int(pA[0])/1000, int(pA[0])%1000, speedA ) )
+				lastTimeA=int(pA[0])
+				lastDistA=int(pA[1])
+			 	SleftVar=int(pA[1])/1000
 			if pB[1] == 'FINISH':
 				SrightVar=402
+				upRightTextS.set(u"FINISH")
 				# finish
 			else:
-				SrightVar=pB[1]
+				speedB=float(int(pB[1])-lastDistB)/float(int(pB[0])-lastTimeB)*3.6
+				rightText.set("%03d.%03d %.1f" % (int(pB[0])/1000,int(pB[0])%1000,speedB))
+				lastTimeB=int(pB[0])
+				lastDistB=int(pB[1])
+				SrightVar=int(pB[1])/1000
 			Sleft.set(SleftVar)
 			Sright.set(SrightVar)
-			print "Arr= "+SleftVar+" ["+",".join(map(str,pA))+"], "+SrightVar+" ["+",".join(map(str,pB))+"]"
 		top.update()
 	top.after(50,readSerial)
 	
-
+lastTimeA=0
+lastTimeB=0
+lastDistA=0
+lastDistB=0
 
 ser = serial.Serial('/dev/tty.usbserial-A50285BI', 115200, timeout=1)
 top = Tk()
 top.geometry("800x600")
 helv36 = Font(family="Helvetica",size=36,weight="bold")
-m1 = PanedWindow(top, orient=VERTICAL)
-m1.pack(fill=BOTH, expand=1)
-mUp = PanedWindow(m1, orient=HORIZONTAL)
-m1.add(mUp)
-m2 = PanedWindow(m1, orient=HORIZONTAL)
-m1.add(m2)
+
+#cv=Canvas(top,bg="white")
+#img=PhotoImage(file="HD.png")
+#bgL=Label(top,image=img)
+#bgL.place(x=0,y=0,relwidth=1, relheight=1)
+#cv.pack()
 
 upLeftText=StringVar()
 upLeftText.set("Трек А")
-upLabelLeft= Label(mUp, textvariable=upLeftText)
-mUp.add(upLabelLeft)
+upLabelLeft= Label(textvariable=upLeftText, font=helv36, fg="red")
+upLabelLeft.grid(row=0,column=0,columnspan=2,sticky="n")
 
 upRightText=StringVar()
 upRightText.set("Трек Б")
-upLabelRight= Label(mUp, textvariable=upRightText)
-mUp.add(upLabelRight)
+upLabelRight= Label(textvariable=upRightText, font=helv36, fg="blue")
+upLabelRight.grid(row=0,column=2,columnspan=2,sticky="n")
+
+upLeftTextS=StringVar()
+upLeftTextS.set("Старт")
+upLabelLeftS= Label(textvariable=upLeftTextS, font=helv36, bg="red")
+upLabelLeftS.grid(row=1,column=1,sticky="ne")
+
+upRightTextS=StringVar()
+upRightTextS.set("Старт")
+upLabelRightS= Label(textvariable=upRightTextS, font=helv36, bg="blue")
+upLabelRightS.grid(row=1,column=2,sticky="nw")
 
 bottomText=StringVar()
-bottom = Label(m1, textvariable=bottomText, anchor=W)
 bottomText.set(u"Ожидание подключения")
-m1.add(bottom)
-Bexit = Button(top, text ="Exit", command = BexitCallBack)
-m1.add(Bexit)
+bottom = Label(textvariable=bottomText)
+bottom.grid(row=3,column=0)
+
+Bclear = Button(text ="Очистить", command = BclearCallBack)
+Bclear.grid(row=3,column=1,columnspan=2)
+
+Bexit = Button(text ="Выход", command = BexitCallBack)
+Bexit.grid(row=3,column=3)
+
 leftText=StringVar()
 leftText.set("000.000")
-Lleft = Label(m2, textvariable=leftText)
-m2.add(Lleft)
+Lleft = Label(textvariable=leftText, font=helv36)
+Lleft.grid(row=2,column=0)
+
 SleftVar=0
-Sleft = Scale(m2, orient=VERTICAL, to=0, length=402, from_=402, digits=3, font=helv36, width=50, bg="red")
-m2.add(Sleft)
+Sleft = Scale(orient=VERTICAL, to=0, length=402, from_=402, digits=3, font=helv36, width=50, bg="red")
+Sleft.grid(row=2,column=1)
+
 SrightVar=0
-Sright = Scale(m2, orient=VERTICAL, to=0, length=402, from_=402, digits=3, font=helv36, width=50, bg="blue")
-m2.add(Sright)
+Sright = Scale(orient=VERTICAL, to=0, length=402, from_=402, digits=3, font=helv36, width=50, bg="blue")
+Sright.grid(row=2,column=2)
+
 rightText=StringVar()
 rightText.set("000.000")
-Lright = Label(m2, textvariable=rightText)
-m2.add(Lright)
+Lright = Label(textvariable=rightText, font=helv36)
+Lright.grid(row=2,column=3)
+
+top.rowconfigure(2, weight=1)
+top.columnconfigure(0, weight=1)
+top.columnconfigure(3, weight=1)
+
 top.after(50,readSerial)
 top.mainloop()
 
