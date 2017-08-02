@@ -51,6 +51,7 @@ class Baton : public SmartButton {
         Serial.println("STOP");
         digitalWrite(INDICATOR, LOW);
         for (int i=0; i<3; i++) digitalWrite(colors[i],LOW);
+        toStart.Set(1000UL * 1000UL);
       } else {
         start = 0;
         toGo = 1;
@@ -121,6 +122,7 @@ void loop() {
     }
   }
   if (toGo>0 && toGo<=3 && toStart.Now()) {
+    if (toGo==2) toStart.Set(3000UL * 1000UL);
     Serial << "toGo=" << toGo << endl;
     digitalWrite(colors[toGo-1],HIGH);
     Serial << "LIGHT " << toGo-1 << endl;
