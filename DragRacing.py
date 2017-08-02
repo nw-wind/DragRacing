@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!c:\Python27\python.exe
 # coding: utf8
 
 from Tkinter import *
@@ -19,8 +19,8 @@ def BclearCallBack():
 	lastTimeA=lastTimeB=lastDistA=lastDistB=0
 	upLeftTextS.set(u"Старт")
 	upRightTextS.set(u"Старт")
-	leftText.set("000.000 0.0")
-	rightText.set("000.000 0.0")
+	leftText.set("000.000s 000km/h")
+	rightText.set("000.000s 000km/h")
 	cvLeft.itemconfig("leftLight", fill="grey")
 	cvRight.itemconfig("rightLight", fill="grey")
 
@@ -79,7 +79,7 @@ def readSerial():
 				except:
 				  print "Left stays"
 				print "Speed A = "+str(speedA)+" "+str(lastDistA)+" "+str(lastTimeA)
-				leftText.set("%03d.%03d %.1f" % ( int(pA[0])/1000, int(pA[0])%1000, speedA ) )
+				leftText.set("%03d.%03ds %03dkm/h" % ( int(pA[0])/1000, int(pA[0])%1000, speedA ) )
 				lastTimeA=int(pA[0])
 				lastDistA=int(pA[1])
 			 	SleftVar=int(pA[1])/1000
@@ -93,7 +93,7 @@ def readSerial():
 				  speedB=float(int(pB[1])-lastDistB)/float(int(pB[0])-lastTimeB)*3.6
 				except:
 				  print "Right stays"
-				rightText.set("%03d.%03d %.1f" % (int(pB[0])/1000,int(pB[0])%1000,speedB))
+				rightText.set("%03d.%03d %03dkm/h" % (int(pB[0])/1000,int(pB[0])%1000,speedB))
 				lastTimeB=int(pB[0])
 				lastDistB=int(pB[1])
 				SrightVar=int(pB[1])/1000
@@ -107,10 +107,12 @@ lastTimeB=0
 lastDistA=0
 lastDistB=0
 
-ser = serial.Serial('/dev/tty.usbserial-A50285BI', 115200, timeout=1)
+#ser = serial.Serial('/dev/tty.usbserial-A50285BI', 115200, timeout=1)
+ser = serial.Serial('COM3', 115200, timeout=1)
 top = Tk()
 top.geometry("800x600")
 helv36 = Font(family="Helvetica",size=36,weight="bold")
+cour36 = Font(family="Lucida Console",size=42,weight="bold")
 
 #cv=Canvas(top,bg="white")
 #img=PhotoImage(file="HD.png")
@@ -158,25 +160,27 @@ Bexit = Button(text ="Выход", command = BexitCallBack)
 Bexit.grid(row=3,column=3)
 
 leftText=StringVar()
-leftText.set("000.000 0.0")
-Lleft = Label(textvariable=leftText, font=helv36)
+leftText.set("000.000s 000km/h")
+Lleft = Label(textvariable=leftText, font=cour36, wraplength=300)
 Lleft.grid(row=2,column=0)
 
 SleftVar=0
-Sleft = Scale(orient=VERTICAL, to=0, length=402, from_=402, digits=3, font=helv36, width=50, bg="red")
+Sleft = Scale(orient=VERTICAL, to=0, length=402, from_=402, digits=3, font=helv36, width=80, bg="red")
 Sleft.grid(row=2,column=1)
 
 SrightVar=0
-Sright = Scale(orient=VERTICAL, to=0, length=402, from_=402, digits=3, font=helv36, width=50, bg="blue")
+Sright = Scale(orient=VERTICAL, to=0, length=402, from_=402, digits=3, font=helv36, width=80, bg="blue")
 Sright.grid(row=2,column=2)
 
 rightText=StringVar()
-rightText.set("000.000 0.0")
-Lright = Label(textvariable=rightText, font=helv36)
+rightText.set("000.000s 000km/h")
+Lright = Label(textvariable=rightText, font=cour36, wraplength=300)
 Lright.grid(row=2,column=3)
 
 top.rowconfigure(2, weight=1)
 top.columnconfigure(0, weight=1)
+top.columnconfigure(1, weight=2)
+top.columnconfigure(2, weight=2)
 top.columnconfigure(3, weight=1)
 
 top.after(50,readSerial)
