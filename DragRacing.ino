@@ -96,7 +96,9 @@ void loop() {
     // Считаем время и расстояние
     unsigned long sc[2]; // saved counters
     for (int i = 0; i < PLAYERS; i++) {
+      noInterrupts();
       sc[i] = pl[i].c;
+      interrupts();
       pl[i].d = sc[i] * circle;
       if (sc[i] <= rotations) pl[i].t = millis() - idleTime;
     }
