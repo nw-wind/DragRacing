@@ -30,14 +30,14 @@ const unsigned long rotations = distance / circle; // оборотов до фи
 
 unsigned long idleTime = 0;
 
-SmartDelay disp(250 * 1000UL);
+SmartDelay disp(197 * 1000UL);
 
 void clearTime() {
   idleTime = millis();
   for (int i = 0; i < PLAYERS; i++) {
     pl[i].d = 0L;
     pl[i].c = 0L;
-    pl[0].t = 0L;
+    pl[i].t = 0L;
   }
 }
 
@@ -96,9 +96,7 @@ void loop() {
     // Считаем время и расстояние
     unsigned long sc[2]; // saved counters
     for (int i = 0; i < PLAYERS; i++) {
-      noInterrupts();
       sc[i] = pl[i].c;
-      interrupts();
       pl[i].d = sc[i] * circle;
       if (sc[i] <= rotations) pl[i].t = millis() - idleTime;
     }
@@ -130,7 +128,7 @@ void loop() {
     Serial << "LIGHT " << toGo-1 << endl;
     //Serial << toGo-1 << " HIGH" << endl;
     if (toGo>1) {
-      digitalWrite(colors[toGo-2],LOW);
+      //digitalWrite(colors[toGo-2],LOW);
       //Serial << toGo-2 << " LOW" << endl;
     }
     toGo++;

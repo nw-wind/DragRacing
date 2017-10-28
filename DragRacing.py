@@ -30,7 +30,7 @@ def BexitCallBack():
 
 def readSerial():
         global cvLeft,cvRight
-	global lastTimeA, lastTimeB,lastDistA, lastDistB
+	global lastTimeA, lastTimeB,lastDistA, lastDistB,maxA,maxB
 	global upRightTextS,upLeftTextS,Sleft,Sright,leftText,rightText
 	ln=ser.readline().rstrip()
 	print "Read: '"+ln+"'"
@@ -79,10 +79,12 @@ def readSerial():
 				except:
 				  print "Left stays"
 				print "Speed A = "+str(speedA)+" "+str(lastDistA)+" "+str(lastTimeA)
-				leftText.set("%03d.%03ds %03dkm/h" % ( int(pA[0])/1000, int(pA[0])%1000, speedA ) )
+				if maxA < speedA:
+					maxA=speedA
 				lastTimeA=int(pA[0])
 				lastDistA=int(pA[1])
-			 	SleftVar=int(pA[1])/1000
+				SleftVar=int(pA[1])/1000
+			leftText.set("%03d.%03ds %03dkm/h" % ( int(pA[0])/1000, int(pA[0])%1000, maxA ) )
 			if pB[1] == 'FINISH':
 				SrightVar=402
 				upRightTextS.set(u"FINISH")
@@ -93,22 +95,26 @@ def readSerial():
 				  speedB=float(int(pB[1])-lastDistB)/float(int(pB[0])-lastTimeB)*3.6
 				except:
 				  print "Right stays"
-				rightText.set("%03d.%03d %03dkm/h" % (int(pB[0])/1000,int(pB[0])%1000,speedB))
+				if maxB < speedB:
+					maxB=speedB				
 				lastTimeB=int(pB[0])
 				lastDistB=int(pB[1])
 				SrightVar=int(pB[1])/1000
+			rightText.set("%03d.%03d %03dkm/h" % (int(pB[0])/1000,int(pB[0])%1000,maxB))
 			Sleft.set(SleftVar)
 			Sright.set(SrightVar)
 		top.update()
-	top.after(50,readSerial)
+	top.after(17,readSerial)
 	
 lastTimeA=0
 lastTimeB=0
 lastDistA=0
 lastDistB=0
 
+maxA=maxB=0
+
 #ser = serial.Serial('/dev/tty.usbserial-A50285BI', 115200, timeout=1)
-ser = serial.Serial('COM3', 115200, timeout=1)
+ser = serial.Serial('COM4', 115200, timeout=1)
 top = Tk()
 top.geometry("800x600")
 helv36 = Font(family="Helvetica",size=36,weight="bold")
@@ -183,7 +189,7 @@ top.columnconfigure(1, weight=2)
 top.columnconfigure(2, weight=2)
 top.columnconfigure(3, weight=1)
 
-top.after(50,readSerial)
+top.after(17,readSerial)
 top.mainloop()
 
 
