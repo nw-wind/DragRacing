@@ -11,7 +11,7 @@ import codecs
 def BclearCallBack():
 	global bottomText
 	global cvLeft,cvRight
-	global lastTimeA, lastTimeB,lastDistA, lastDistB
+	global lastTimeA,lastTimeB,lastDistA,lastDistB
 	global upRightTextS,upLeftTextS,Sleft,Sright,leftText,rightText
 	Sleft.set(0)
 	Sright.set(0)
@@ -30,7 +30,7 @@ def BexitCallBack():
 
 def readSerial():
         global cvLeft,cvRight
-	global lastTimeA, lastTimeB,lastDistA, lastDistB,maxA,maxB
+	global lastTimeA,lastTimeB,lastDistA,lastDistB,maxA,maxB
 	global upRightTextS,upLeftTextS,Sleft,Sright,leftText,rightText
 	if ser!=None:
 		ln=ser.readline().rstrip()
