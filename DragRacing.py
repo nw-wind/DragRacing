@@ -32,7 +32,10 @@ def readSerial():
         global cvLeft,cvRight
 	global lastTimeA, lastTimeB,lastDistA, lastDistB,maxA,maxB
 	global upRightTextS,upLeftTextS,Sleft,Sright,leftText,rightText
-	ln=ser.readline().rstrip()
+	if ser!=None:
+		ln=ser.readline().rstrip()
+	else: 
+		ln='READY'
 	print "Read: '"+ln+"'"
 	if ln != '':
         	if ln == 'READY':
@@ -114,7 +117,9 @@ lastDistB=0
 maxA=maxB=0
 
 #ser = serial.Serial('/dev/tty.usbserial-A50285BI', 115200, timeout=1)
-ser = serial.Serial('COM4', 115200, timeout=1)
+#ser = serial.Serial('COM4', 115200, timeout=1)  
+ser = None  
+
 top = Tk()
 top.geometry("800x600")
 helv36 = Font(family="Helvetica",size=36,weight="bold")
