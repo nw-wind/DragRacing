@@ -5,11 +5,20 @@ from PyQt5 import QtWidgets, uic
 from PyQt5.QtCore import QObject, QThread, pyqtSignal
 import sys, time, random
 
+# Глобальное
+
 # МКА
 
 
 
 # Классы
+
+class Dialog(QtWidgets.QDialog):
+    def __init__(self):
+        super(Dialog, self).__init__() 
+        uic.loadUi('dialog.ui', self)
+        self.show()
+        self.setWindowTitle("Новая гонка, запись участников...")
 
 class Worker(QObject):
     finished = pyqtSignal()
@@ -37,10 +46,23 @@ class Ui(QtWidgets.QMainWindow):
     def __init__(self):
         super(Ui, self).__init__() 
         uic.loadUi('DragRacing.ui', self)
-        self.startButton.clicked.connect(self.runLongTask)
+        self.newButton.clicked.connect(self.newRace)
+        self.startButton.clicked.connect(self.startRace)
+        self.stopButton.clicked.connect(self.stopRace)
         self.showMaximized()
 
-    def runLongTask(self):
+    def newRace(self):
+        d = Dialog()
+        if d.exec():
+            print("ok")
+            self.leftName.setText(d.leftModelEdit.text())
+            self.leftModel.setText(d.leftModelEdit.text())
+            self.rightName.setText(d.rightNameEdit.text())
+            self.rightModel.setText(d.rightModelEdit.text())
+        else:
+            print("НИчего не делаем")
+
+    def startRace(self):
         self.thread = QThread()
         self.worker = Worker()
         self.worker.moveToThread(self.thread)
@@ -66,6 +88,9 @@ class Ui(QtWidgets.QMainWindow):
         )
         # Раскраска фамилий.
         # Запись отчёта.
+
+    def stopRace(self):
+        print("Остановка")
 
     def reportProgress(self,n, m):
         print(f"repo {n}")
