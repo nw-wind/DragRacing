@@ -4,14 +4,43 @@
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtCore import QObject, QThread, pyqtSignal
 import sys, time, random
+import RPi.GPIO as GPIO  
 
 # Глобальное
+
+# Сюда включать датчики.
+leftPin = 23
+rightPin = 24
+
+# Подсветка работы. 
+# Повтор прерываний.
+leftLed = 20
+rightLed = 21
+# Работа:
+# Готовность: Зелёный. Гаснет при нажатии старта. Зажигается, когда новая гонка прописана.
+# Старт: Красный.
+# Стоп - красный гаснет.
+
+counters=dict(
+    leftPin: {'count': 0, 'distance':0, 'speed': 0},
+    rightPin: {'count': 0, 'distance':0, 'speed': 0},
+    )
 
 # МКА
 
 
 
 # Классы
+
+class Signal(object):
+    def __init__(self, pin):
+        self.pin = pin
+        GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+        GPIO.add_event_detect(self.pin, GPIO.RISING, callback=interrupt, bouncetime=2)
+
+    def interrupt(self, pin):
+        counters[pin]['count']+=1
+        print(f"Interrupt {pin}, count={counters[pin]['count']}")
 
 class Dialog(QtWidgets.QDialog):
     def __init__(self):
@@ -26,14 +55,15 @@ class Worker(QObject):
 
     def run(self):
         print("in thread")
+        preStartCleanUp()
         win.startButton.setText("Поехали...")
         print("button")
         ldist=0
         rdist=0
-        for i in range(100):
+        for i in range(1000): # время гонки
             print(f"t={i}")
-            ldist += random.randint(0,4)
-            rdist += random.randint(0,5)
+            ldist = counters[leftPin]['count']
+            rdist = counters[rightPin]['count']
             self.progress.emit(ldist, rdist)
             print("emited")
             time.sleep(0.2)
@@ -60,7 +90,7 @@ class Ui(QtWidgets.QMainWindow):
             self.rightName.setText(d.rightNameEdit.text())
             self.rightModel.setText(d.rightModelEdit.text())
         else:
-            print("НИчего не делаем")
+            print("Ничего не делаем")
 
     def startRace(self):
         self.thread = QThread()
@@ -102,10 +132,25 @@ class Ui(QtWidgets.QMainWindow):
         self.rightDistance.setText(str(m))
         print(f"reported")
 
+def preStartCleanUp():
+    # Очищает всё в момент старта.
+    print("Очистка")
+
+GPIO.setmode(GPIO.BCM)
+leftData = Signal(leftPin)
+rightData = Signal(rightPin)
+GPIO.setup(leftLed, GPIO.OUT)
+GPIO.setup(rightLed, GPIO.OUT)
+
+# Гуй
 app = QtWidgets.QApplication([])
 win = Ui()
 # Надо нажать New... или заполнить поля.
 win.startButton.setEnabled(True)
 win.stopButton.setEnabled(False)
 # Пыщ!
-sys.exit(app.exec())
+
+
+rc = app.exec()
+GPIO.cleanup()
+sys.exit(rc)
