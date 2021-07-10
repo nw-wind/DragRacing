@@ -20,11 +20,8 @@ rightLed = 21
 # Готовность: Зелёный. Гаснет при нажатии старта. Зажигается, когда новая гонка прописана.
 # Старт: Красный.
 # Стоп - красный гаснет.
-
-counters=dict(
-    leftPin: {'count': 0, 'distance':0, 'speed': 0},
-    rightPin: {'count': 0, 'distance':0, 'speed': 0},
-    )
+readyLed = 16
+startLed = 17
 
 # МКА
 
@@ -32,15 +29,32 @@ counters=dict(
 
 # Классы
 
-class Signal(object):
-    def __init__(self, pin):
+# Гонщик и его данные
+class Racer():
+    def __init__(pin, name='Гонщик', model='Мопед'):
         self.pin = pin
+        self.name = name
+        self.model = model
+        self.rotations = 0
+        self.distance = 0
+        self.speed = 0.0
+        self.time = 0.0
+
+class Signal(object):
+    def __init__(self, pin, led):
+        self.pin = pin
+        self.led = led
         GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-        GPIO.add_event_detect(self.pin, GPIO.RISING, callback=interrupt, bouncetime=2)
+        GPIO.add_event_detect(self.pin, GPIO.RISING, callback=self.interrupt, bouncetime=2)
+        print(f"Сигналы от {pin}.")
 
     def interrupt(self, pin):
-        counters[pin]['count']+=1
-        print(f"Interrupt {pin}, count={counters[pin]['count']}")
+        if self.pin == pin:
+            counters[self.pin]['count']+=1
+            GPIO.output(self.led, counters[self.pin]['count']%2) # Лучше бы на каждый метр...
+            print(f"Interrupt {self.pin}, count={counters[self.pin]['count']}")
+        else:
+            print(f"Miisng int call {self.pin} vs {pin}")
 
 class Dialog(QtWidgets.QDialog):
     def __init__(self):
@@ -54,32 +68,42 @@ class Worker(QObject):
     progress = pyqtSignal(int, int)
 
     def run(self):
-        print("in thread")
         preStartCleanUp()
         win.startButton.setText("Поехали...")
-        print("button")
         ldist=0
         rdist=0
-        for i in range(1000): # время гонки
-            print(f"t={i}")
+        for i in range(60): # время гонки
             ldist = counters[leftPin]['count']
             rdist = counters[rightPin]['count']
             self.progress.emit(ldist, rdist)
-            print("emited")
-            time.sleep(0.2)
-            print("wakeup")
-        print("look ends")
+            time.sleep(1)
         self.finished.emit()
-        print("finished")
 
 class Ui(QtWidgets.QMainWindow):
     def __init__(self):
-        super(Ui, self).__init__() 
+        super(Ui, self).__init__()
         uic.loadUi('DragRacing.ui', self)
         self.newButton.clicked.connect(self.newRace)
         self.startButton.clicked.connect(self.startRace)
         self.stopButton.clicked.connect(self.stopRace)
+        # Заполнить горнчегов
+        self.left = Racer(leftPin)
+        self.fill(left)
+        self.right = Racer(rightPin)
+        self.fill(right)
+        # пыщ!
         self.showMaximized()
+
+    def fill(self, racer):
+        if racer.pin == leftPin:
+            self.leftName.text(racer.name)
+            self.leftModel.text(racer.model)
+            self.leftSpeed.text(racer.speed)
+            self.leftDistance.text(racer.distance)
+            self.leftTime.text(racer.time)
+            self.leftBar.setValue(racer.distance)
+        else:
+
 
     def newRace(self):
         d = Dialog()
@@ -93,6 +117,7 @@ class Ui(QtWidgets.QMainWindow):
             print("Ничего не делаем")
 
     def startRace(self):
+        global reportFile
         self.thread = QThread()
         self.worker = Worker()
         self.worker.moveToThread(self.thread)
@@ -118,27 +143,30 @@ class Ui(QtWidgets.QMainWindow):
         )
         # Раскраска фамилий.
         # Запись отчёта.
+        try:
+            reportFile.write("\t".join([time.now(),
+                leftName, leftModel,
+                counters[leftPin]['speed'], counters[leftPin]['speed'],
+                rightName,rightModel,rightSpeed,rightTime])+"\n")
 
     def stopRace(self):
         print("Остановка")
 
     def reportProgress(self,n, m):
-        print(f"repo {n}")
         self.leftBar.setValue(n)
         self.leftSpeed.setText(str(n%100))
         self.leftDistance.setText(str(n))
         self.rightBar.setValue(m)
         self.rightSpeed.setText(str(m%100))
         self.rightDistance.setText(str(m))
-        print(f"reported")
 
 def preStartCleanUp():
     # Очищает всё в момент старта.
     print("Очистка")
 
 GPIO.setmode(GPIO.BCM)
-leftData = Signal(leftPin)
-rightData = Signal(rightPin)
+leftData = Signal(leftPin, leftLed)
+rightData = Signal(rightPin, rightLed)
 GPIO.setup(leftLed, GPIO.OUT)
 GPIO.setup(rightLed, GPIO.OUT)
 
@@ -149,8 +177,7 @@ win = Ui()
 win.startButton.setEnabled(True)
 win.stopButton.setEnabled(False)
 # Пыщ!
-
-
-rc = app.exec()
+with open('report.txt','w') as reportFile:
+    rc = app.exec()
 GPIO.cleanup()
 sys.exit(rc)
