@@ -8,6 +8,8 @@ import RPi.GPIO as GPIO
 
 # Глобальное
 
+racerData=dict()
+
 # Сюда включать датчики.
 leftPin = 23
 rightPin = 24
@@ -31,7 +33,7 @@ startLed = 17
 
 # Гонщик и его данные
 class Racer():
-    def __init__(pin, name='Гонщик', model='Мопед'):
+    def __init__(self, pin, name='Гонщик', model='Мопед'):
         self.pin = pin
         self.name = name
         self.model = model
@@ -50,9 +52,9 @@ class Signal(object):
 
     def interrupt(self, pin):
         if self.pin == pin:
-            counters[self.pin]['count']+=1
-            GPIO.output(self.led, counters[self.pin]['count']%2) # Лучше бы на каждый метр...
-            print(f"Interrupt {self.pin}, count={counters[self.pin]['count']}")
+            racerData[self.pin].rotations += 1
+            GPIO.output(self.led, racerData[self.pin].rotations % 2)    # Лучше бы на каждый метр...
+            print(f"Interrupt {self.pin}, count={racerData[self.pin].rotations}")
         else:
             print(f"Miisng int call {self.pin} vs {pin}")
 
@@ -72,9 +74,9 @@ class Worker(QObject):
         win.startButton.setText("Поехали...")
         ldist=0
         rdist=0
-        for i in range(60): # время гонки
-            ldist = counters[leftPin]['count']
-            rdist = counters[rightPin]['count']
+        for i in range(600): # время гонки
+            ldist = int(racerData[leftPin].distance)
+            rdist = int(racerData[rightPin].distance)
             self.progress.emit(ldist, rdist)
             time.sleep(1)
         self.finished.emit()
@@ -87,23 +89,25 @@ class Ui(QtWidgets.QMainWindow):
         self.startButton.clicked.connect(self.startRace)
         self.stopButton.clicked.connect(self.stopRace)
         # Заполнить горнчегов
-        self.left = Racer(leftPin)
-        self.fill(left)
-        self.right = Racer(rightPin)
-        self.fill(right)
+        self.left = racerData[leftPin] = Racer(leftPin)
+        self.fill(self.left)
+        self.right = racerData[rightPin] = Racer(rightPin)
+        self.fill(self.right)
         # пыщ!
-        self.showMaximized()
+        # self.showMaximized()
+        self.showFullScreen()
 
     def fill(self, racer):
         if racer.pin == leftPin:
-            self.leftName.text(racer.name)
-            self.leftModel.text(racer.model)
-            self.leftSpeed.text(racer.speed)
-            self.leftDistance.text(racer.distance)
-            self.leftTime.text(racer.time)
-            self.leftBar.setValue(racer.distance)
+            self.leftName.setText(racer.name)
+            self.leftModel.setText(racer.model)
+            self.leftSpeed.setText(str(racer.speed))
+            self.leftDistance.setText(str(racer.distance))
+            self.leftTime.setText(str(racer.time))
+            self.leftBar.setValue(int(racer.distance))
         else:
-
+            self.rightName.setText(racer.name)
+            # добить
 
     def newRace(self):
         d = Dialog()
@@ -121,19 +125,12 @@ class Ui(QtWidgets.QMainWindow):
         self.thread = QThread()
         self.worker = Worker()
         self.worker.moveToThread(self.thread)
-        print("run!")
         self.thread.started.connect(self.worker.run)
-        print("worker run!")
         self.worker.finished.connect(self.thread.quit)
-        print("t q")
         self.worker.finished.connect(self.worker.deleteLater)
-        print("w dl")
         self.thread.finished.connect(self.thread.deleteLater)
-        print("t dl")
         self.worker.progress.connect(self.reportProgress)
-        print("reportProgress")
         self.thread.start()
-        print("started")
         self.startButton.setEnabled(False)
         self.thread.finished.connect(
             lambda: self.startButton.setEnabled(True)
@@ -145,9 +142,10 @@ class Ui(QtWidgets.QMainWindow):
         # Запись отчёта.
         try:
             reportFile.write("\t".join([time.now(),
-                leftName, leftModel,
-                counters[leftPin]['speed'], counters[leftPin]['speed'],
-                rightName,rightModel,rightSpeed,rightTime])+"\n")
+                self.left.name, self.left.model, self.left.speed, self.left.time,
+                self.right.name, self.right.model, self.right.speed, self.right.time])+"\n")
+        except Exception as e:
+            print(f"Опаньки! {e}")
 
     def stopRace(self):
         print("Остановка")
