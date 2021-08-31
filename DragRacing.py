@@ -39,7 +39,13 @@ readyLed = 4
 startLed = 22
 setUpLed = 25
 
-# МКА
+refreshProgress = 0.2
+
+pi = 3.1416826
+diameter = 108.0   # mm
+circle = diameter * pi
+distance = 402.0 * 1000.0
+
 
 # Классы
 
@@ -53,8 +59,10 @@ class Racer:
         self.model = model
         self.rotations = 0
         self.distance = 0
-        self.speed = 0.0
+        self.speed = 0.0    # надо считать
         self.time = 0.0
+        self.startTime = 0.0
+        self.counting = False
 
 
 class Signal(object):
@@ -67,8 +75,16 @@ class Signal(object):
         print(f"Сигналы от {pin}.")
 
     def interrupt(self, pin):
-        if self.pin == pin:
+        if self.pin == pin and racerData[self.pin].counting:
+            print(f"Interrupt {pin}/{self.pin} {racerData[self.pin].counting} = {racerData[self.pin].rotations} {racerData[self.pin].distance} {distance} ")
             racerData[self.pin].rotations += 1
+            racerData[self.pin].distance = racerData[self.pin].rotations * circle
+            racerData[self.pin].time = time.time() - racerData[self.pin].startTime
+            print(f"{racerData[self.pin].time} = {time.time()} - {racerData[self.pin].startTime}")
+            if racerData[self.pin].distance >= distance:
+                racerData[self.pin].counting = False
+                racerData[self.pin].distance = distance
+                print(f"Закончили считать")
             if not MACOSX:
                 GPIO.output(self.led, racerData[self.pin].rotations % 2)    # Лучше бы на каждый метр...
             print(f"Interrupt {self.pin}, count={racerData[self.pin].rotations}")
@@ -83,21 +99,43 @@ class Dialog(QtWidgets.QDialog):
         self.show()
         self.setWindowTitle("Новая гонка, запись участников...")
 
+class StartLight(QtWidgets.QDialog):
+    def __init__(self):
+        super(Dialog, self).__init__()
+        uic.loadUi('StartLight.ui',self)
+        self.show()
+        self.setWindowTitle("На старт...")
 
 class Worker(QObject):
     finished = pyqtSignal()
-    progress = pyqtSignal(int, int)
+    progress = pyqtSignal()
+
+    def pre_start_cleanup(self):
+        # Очищает всё в момент старта.
+        print("Очистка")
+        for pin, racer in racerData.items():
+            racer.rotations = 0
+            racer.distance = 0
+            racer.speed = 0.0
+            racer.time = 0.0
+            racer.startTime = time.time()
+            racer.counting = True
 
     def run(self):
-        pre_start_cleanup()
+        self.pre_start_cleanup()
         win.startButton.setText("Поехали...")
-        ldist = 0
-        rdist = 0
         for i in range(600):    # время гонки
-            ldist = int(racerData[leftPin].distance)
-            rdist = int(racerData[rightPin].distance)
-            self.progress.emit(ldist, rdist)
-            time.sleep(1)
+            if MACOSX:
+                for fake in range(random.randint(50,100)):
+                    leftData.interrupt(leftPin)
+                for fake in range(random.randint(20, 70)):
+                    rightData.interrupt(rightPin)
+            self.progress.emit()
+            if not (racerData[leftPin].counting or racerData[rightPin].counting):
+                # Гонка закончена, оба приехали.
+                print(f"Приехали оба.")
+                break
+            time.sleep(refreshProgress)
         self.finished.emit()
 
 
@@ -129,7 +167,11 @@ class Ui(QtWidgets.QMainWindow):
             self.leftBar.setValue(int(racer.distance))
         else:
             self.rightName.setText(racer.name)
-            # добить
+            self.rightModel.setText(racer.model)
+            self.rightSpeed.setText(str(racer.speed))
+            self.rightDistance.setText(str(racer.distance))
+            self.rightTime.setText(str(racer.time))
+            self.rightBar.setValue(int(racer.distance))
 
     def new_race(self):
         d = Dialog()
@@ -160,6 +202,8 @@ class Ui(QtWidgets.QMainWindow):
         self.thread.finished.connect(
             lambda: self.startButton.setText("Старт!")
         )
+        # d = StartLight()
+        # d.exec()
         # Раскраска фамилий.
         # Запись отчёта.
         try:
@@ -172,26 +216,23 @@ class Ui(QtWidgets.QMainWindow):
     def stop_race(self):
         print("Остановка")
 
-    def report_progress(self, n, m):
-        self.leftBar.setValue(n)
-        self.leftSpeed.setText(str(n % 100))
-        self.leftDistance.setText(str(n))
-        self.rightBar.setValue(m)
-        self.rightSpeed.setText(str(m % 100))
-        self.rightDistance.setText(str(m))
-
-
-def pre_start_cleanup():
-    # Очищает всё в момент старта.
-    print("Очистка")
+    def report_progress(self):
+        self.leftBar.setValue(int(racerData[leftPin].distance / 1000))
+        self.leftSpeed.setText("{:.2f}".format(racerData[leftPin].speed))
+        self.leftDistance.setText("{:.2f}".format(racerData[rightPin].distance / 1000))
+        self.leftTime.setText("{:.2f}".format(racerData[leftPin].time))
+        self.rightBar.setValue(int(racerData[rightPin].distance / 1000))
+        self.rightSpeed.setText("{:.2f}".format(racerData[rightPin].speed))
+        self.rightDistance.setText("{:.2f}".format(racerData[rightPin].distance / 1000))
+        self.rightTime.setText("{:.2f}".format(racerData[rightPin].time))
 
 
 if not MACOSX:
     GPIO.setmode(GPIO.BCM)
-    leftData = Signal(leftPin, leftLed)
-    rightData = Signal(rightPin, rightLed)
     GPIO.setup(leftLed, GPIO.OUT)
     GPIO.setup(rightLed, GPIO.OUT)
+leftData = Signal(leftPin, leftLed)
+rightData = Signal(rightPin, rightLed)
 
 # Гуй
 app = QtWidgets.QApplication([])
