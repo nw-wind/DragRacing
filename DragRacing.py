@@ -46,6 +46,7 @@ diameter = 108.0   # mm
 circle = diameter * pi
 distance = 402.0 * 1000.0
 
+working = False
 
 # Классы
 
@@ -63,6 +64,9 @@ class Racer:
         self.time = 0.0
         self.startTime = 0.0
         self.counting = False
+        # Для скорости
+        self.lastTime = 0.0
+        self.lastDistance = 0.0
 
 
 class Signal(object):
@@ -110,26 +114,19 @@ class Worker(QObject):
     finished = pyqtSignal()
     progress = pyqtSignal()
 
-    def pre_start_cleanup(self):
-        # Очищает всё в момент старта.
-        print("Очистка")
-        for pin, racer in racerData.items():
-            racer.rotations = 0
-            racer.distance = 0
-            racer.speed = 0.0
-            racer.time = 0.0
-            racer.startTime = time.time()
-            racer.counting = True
-
     def run(self):
-        self.pre_start_cleanup()
+        pre_start_cleanup()
         win.startButton.setText("Поехали...")
         for i in range(600):    # время гонки
+            if not working:
+                break
             if MACOSX:
                 for fake in range(random.randint(50,100)):
                     leftData.interrupt(leftPin)
+                    time.sleep(0.01)
                 for fake in range(random.randint(20, 70)):
                     rightData.interrupt(rightPin)
+                    time.sleep(0.01)
             self.progress.emit()
             if not (racerData[leftPin].counting or racerData[rightPin].counting):
                 # Гонка закончена, оба приехали.
@@ -181,11 +178,21 @@ class Ui(QtWidgets.QMainWindow):
             self.leftModel.setText(d.leftModelEdit.text())
             self.rightName.setText(d.rightNameEdit.text())
             self.rightModel.setText(d.rightModelEdit.text())
+            pre_start_cleanup()
+            self.report_progress()
         else:
             print("Ничего не делаем")
 
+    def fin_conn(self):
+        self.startButton.setEnabled(True)
+        self.startButton.setText("Старт!")
+        self.stopButton.setEnabled(False)
+        self.newButton.setEnabled(True)
+
     def start_race(self):
         global reportFile
+        global working
+        working = True
         self.thread = QThread()
         self.worker = Worker()
         self.worker.moveToThread(self.thread)
@@ -196,11 +203,10 @@ class Ui(QtWidgets.QMainWindow):
         self.worker.progress.connect(self.report_progress)
         self.thread.start()
         self.startButton.setEnabled(False)
+        self.newButton.setEnabled(False)
+        self.stopButton.setEnabled(True)
         self.thread.finished.connect(
-            lambda: self.startButton.setEnabled(True)
-        )
-        self.thread.finished.connect(
-            lambda: self.startButton.setText("Старт!")
+            self.fin_conn
         )
         # d = StartLight()
         # d.exec()
@@ -214,9 +220,26 @@ class Ui(QtWidgets.QMainWindow):
             print(f"Опаньки! {e}")
 
     def stop_race(self):
+        global working
         print("Остановка")
+        working = False
 
     def report_progress(self):
+        try:
+            racerData[leftPin].speed = ((racerData[leftPin].distance - racerData[leftPin].lastDistance) / 1000000) / \
+                                       ((racerData[leftPin].time - racerData[leftPin].lastTime) / 3600)
+        except ZeroDivisionError:
+            print(f"ой, деление на ноль")
+        print(f"{racerData[leftPin].speed} = ({racerData[leftPin].distance} - {racerData[leftPin].lastDistance}) / 1000000 / ({racerData[leftPin].time} - {racerData[leftPin].lastTime}) / 3600")
+        racerData[leftPin].lastTime = racerData[leftPin].time
+        racerData[leftPin].lastDistance = racerData[leftPin].distance
+        try:
+            racerData[rightPin].speed = ((racerData[rightPin].distance - racerData[rightPin].lastDistance) / 1000000) / \
+                                         ((racerData[rightPin].time - racerData[rightPin].lastTime) / 3600)
+        except ZeroDivisionError:
+            print(f"ой, деление на ноль")
+        racerData[rightPin].lastTime = racerData[rightPin].time
+        racerData[rightPin].lastDistance = racerData[rightPin].distance
         self.leftBar.setValue(int(racerData[leftPin].distance / 1000))
         self.leftSpeed.setText("{:.2f}".format(racerData[leftPin].speed))
         self.leftDistance.setText("{:.2f}".format(racerData[rightPin].distance / 1000))
@@ -226,6 +249,18 @@ class Ui(QtWidgets.QMainWindow):
         self.rightDistance.setText("{:.2f}".format(racerData[rightPin].distance / 1000))
         self.rightTime.setText("{:.2f}".format(racerData[rightPin].time))
 
+def pre_start_cleanup():
+    # Очищает всё в момент старта.
+    print("Очистка")
+    for pin, racer in racerData.items():
+        racer.rotations = 0
+        racer.distance = 0
+        racer.speed = 0.0
+        racer.time = 0.0
+        racer.startTime = time.time()
+        racer.counting = True
+        racer.lastTime = 0.0
+        racer.lastDistance = 0.0
 
 if not MACOSX:
     GPIO.setmode(GPIO.BCM)
