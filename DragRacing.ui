@@ -115,6 +115,7 @@
          <widget class="QLabel" name="leftTime">
           <property name="font">
            <font>
+            <family>Courier</family>
             <pointsize>48</pointsize>
             <weight>75</weight>
             <bold>true</bold>
@@ -160,7 +161,7 @@
          <widget class="QLabel" name="leftSpeed">
           <property name="font">
            <font>
-            <family>Helvetica</family>
+            <family>Courier</family>
             <pointsize>48</pointsize>
             <weight>75</weight>
             <bold>true</bold>
@@ -206,6 +207,7 @@
          <widget class="QLabel" name="leftDistance">
           <property name="font">
            <font>
+            <family>Courier</family>
             <pointsize>52</pointsize>
             <weight>75</weight>
             <bold>true</bold>
@@ -442,6 +444,7 @@ border: 1px solid black;
          <widget class="QLabel" name="rightTime">
           <property name="font">
            <font>
+            <family>Courier</family>
             <pointsize>52</pointsize>
             <weight>75</weight>
             <bold>true</bold>
@@ -487,7 +490,7 @@ border: 1px solid black;
          <widget class="QLabel" name="rightSpeed">
           <property name="font">
            <font>
-            <family>Helvetica</family>
+            <family>Courier</family>
             <pointsize>48</pointsize>
             <weight>75</weight>
             <bold>true</bold>
@@ -533,6 +536,7 @@ border: 1px solid black;
          <widget class="QLabel" name="rightDistance">
           <property name="font">
            <font>
+            <family>Courier</family>
             <pointsize>52</pointsize>
             <weight>75</weight>
             <bold>true</bold>
