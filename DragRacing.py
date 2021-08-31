@@ -9,6 +9,7 @@ else:
 
 from PyQt5 import QtWidgets
 from PyQt5 import uic
+from PyQt5 import QtCore
 from PyQt5.QtCore import QObject, QThread, pyqtSignal
 import sys
 import time
@@ -105,10 +106,16 @@ class Dialog(QtWidgets.QDialog):
 
 class StartLight(QtWidgets.QDialog):
     def __init__(self):
-        super(Dialog, self).__init__()
-        uic.loadUi('StartLight.ui',self)
-        self.show()
+        super(StartLight, self).__init__()
+        uic.loadUi('StartLight.ui', self)
         self.setWindowTitle("На старт...")
+
+    def setColor(self, color):
+        self.setStyleSheet(f"background:{color}")
+
+    def closeMe(self):
+        print("close SL")
+        self.close()
 
 class Worker(QObject):
     finished = pyqtSignal()
@@ -192,6 +199,16 @@ class Ui(QtWidgets.QMainWindow):
     def start_race(self):
         global reportFile
         global working
+        sl = StartLight()
+        for c in ['red', 'yellow', 'green']:
+            print(f"Color={c}")
+            self.timer = QtCore.QTimer(self)
+            self.timer.timeout.connect(sl.closeMe)
+            self.timer.start(2000)
+            sl.setColor(c)
+            sl.show()
+            sl.exec()
+            time.sleep(0.5)
         working = True
         self.thread = QThread()
         self.worker = Worker()
