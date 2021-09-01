@@ -40,7 +40,7 @@ readyLed = 4
 startLed = 22
 setUpLed = 25
 
-refreshProgress = 0.1
+refreshProgress = 0.2
 raceLoops = int(600 / refreshProgress)
 
 pi = 3.1416826
@@ -77,6 +77,7 @@ class Signal(object):
         self.pin = pin
         self.led = led
         if not MACOSX:
+            print(f"set int {pin}")
             GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
             GPIO.add_event_detect(self.pin, GPIO.RISING, callback=self.interrupt, bouncetime=2)
         print(f"Сигналы от {pin}.")
@@ -292,6 +293,7 @@ def pre_start_cleanup():
         racer.maxSpeed = 0.0
 
 if not MACOSX:
+    print(f"RPI mode")
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(leftLed, GPIO.OUT)
     GPIO.setup(rightLed, GPIO.OUT)
