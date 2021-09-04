@@ -84,20 +84,21 @@ class Signal(object):
 
     def interrupt(self, pin):
         if self.pin == pin and racerData[self.pin].counting:
-            print(f"Interrupt {pin}/{self.pin} {racerData[self.pin].counting} = {racerData[self.pin].rotations} {racerData[self.pin].distance} {distance} ")
+            #print(f"Interrupt {pin}/{self.pin} {racerData[self.pin].counting} = {racerData[self.pin].rotations} {racerData[self.pin].distance} {distance} ")
             racerData[self.pin].rotations += 1
             racerData[self.pin].distance = racerData[self.pin].rotations * circle
             racerData[self.pin].time = time.time() - racerData[self.pin].startTime
-            print(f"{racerData[self.pin].time} = {time.time()} - {racerData[self.pin].startTime}")
+            #print(f"{racerData[self.pin].time} = {time.time()} - {racerData[self.pin].startTime}")
             if racerData[self.pin].distance >= distance:
                 racerData[self.pin].counting = False
                 racerData[self.pin].distance = distance
                 print(f"Закончили считать")
             if not MACOSX:
                 GPIO.output(self.led, racerData[self.pin].rotations % 2)    # Лучше бы на каждый метр...
-            print(f"Interrupt {self.pin}, count={racerData[self.pin].rotations}")
+            #print(f"Interrupt {self.pin}, count={racerData[self.pin].rotations}")
         else:
-            print(f"Missing int call {self.pin} vs {pin}")
+            #print(f"Missing int call {self.pin} vs {pin}")
+            pass
 
 
 class Dialog(QtWidgets.QDialog):
@@ -250,22 +251,22 @@ class Ui(QtWidgets.QMainWindow):
             racerData[leftPin].speed = ((racerData[leftPin].distance - racerData[leftPin].lastDistance) / 1000000) / \
                                        ((racerData[leftPin].time - racerData[leftPin].lastTime) / 3600)
         except ZeroDivisionError:
-            print(f"ой, деление на ноль")
+            print(f"zero division")
         print(f"{racerData[leftPin].speed} = ({racerData[leftPin].distance} - {racerData[leftPin].lastDistance}) / 1000000 / ({racerData[leftPin].time} - {racerData[leftPin].lastTime}) / 3600")
         racerData[leftPin].lastTime = racerData[leftPin].time
         racerData[leftPin].lastDistance = racerData[leftPin].distance
-        if racerData[leftPin].speed >= racerData[leftPin].maxSpeed:
+        if racerData[leftPin].speed >= racerData[leftPin].maxSpeed and racerData[leftPin].time >= 2*refreshProgress:
             racerData[leftPin].maxSpeed = racerData[leftPin].speed
 
         try:
             racerData[rightPin].speed = ((racerData[rightPin].distance - racerData[rightPin].lastDistance) / 1000000) / \
                                          ((racerData[rightPin].time - racerData[rightPin].lastTime) / 3600)
         except ZeroDivisionError:
-            print(f"ой, деление на ноль")
+            print(f"zero division")
         print(f"{racerData[rightPin].speed} = ({racerData[rightPin].distance} - {racerData[rightPin].lastDistance}) / 1000000 / ({racerData[rightPin].time} - {racerData[rightPin].lastTime}) / 3600")
         racerData[rightPin].lastTime = racerData[rightPin].time
         racerData[rightPin].lastDistance = racerData[rightPin].distance
-        if racerData[rightPin].speed >= racerData[rightPin].maxSpeed:
+        if racerData[rightPin].speed >= racerData[rightPin].maxSpeed and racerData[rightPin].time >= 2*refreshProgress:
             racerData[rightPin].maxSpeed = racerData[rightPin].speed
 
         self.leftBar.setValue(int(racerData[leftPin].distance / 1000))
