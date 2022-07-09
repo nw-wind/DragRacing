@@ -105,7 +105,7 @@ class Signal(object):
                 GPIO.output(self.led, racer_data[self.pin].rotations % 2)  # Лучше бы на каждый метр...
             log.debug(f"Interrupt {self.pin}, count={racer_data[self.pin].rotations}")
         else:
-            log.debug(f"Missing int call {self.pin} vs {pin}")
+            log.debug(f"Missing int call {self.pin} vs {pin} and {racer_data[self.pin].counting}")
             pass
 
 
