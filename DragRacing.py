@@ -74,6 +74,7 @@ class Racer:
         self.lastTime = 0.0
         self.lastDistance = 0.0
         self.maxSpeed = 0.0
+        self.falseStart = False
 
 
 racer_data = {left_pin: Racer(left_pin), right_pin: Racer(right_pin)}
@@ -146,6 +147,7 @@ class Signal(object):
         else:
             # Здесь фальстарт!
             log.debug(f"Missing int call {self.pin} vs {pin} and {racer_data[self.pin].counting}. Фальстарт!")
+            racer_data[self.pin].falseStart = True
             pass
 
 
@@ -258,6 +260,9 @@ class Ui(QtWidgets.QMainWindow):
         w.exec_()
         log.warning(f"Светофор отработал. {working}")
         log.warning(f"Светофор отработал. Можно стартовать. {working}")
+        if racer_data[left_pin].falseStart or racer_data[right_pin].falseStart:
+            log.info("Фальстарт! Остановка гонки.")
+            return
         self.thread = QThread()
         self.worker = Worker()
         self.worker.moveToThread(self.thread)
@@ -301,7 +306,7 @@ class Ui(QtWidgets.QMainWindow):
                                                 ) / 3600
                                                )
         except ZeroDivisionError:
-            log.error(f"zero division")
+            log.error(f"zero division на обновлении")
         log.debug(f"{racer_data[left_pin].speed} = ({racer_data[left_pin].distance} - " +
                   "{racer_data[left_pin].lastDistance}) / 1000000 / ({racer_data[left_pin].time} - " +
                   "{racer_data[left_pin].lastTime}) / 3600")
@@ -316,7 +321,7 @@ class Ui(QtWidgets.QMainWindow):
                 right_pin].lastDistance) / 1000000) / \
                                           ((racer_data[right_pin].time - racer_data[right_pin].lastTime) / 3600)
         except ZeroDivisionError:
-            log.error(f"zero division")
+            log.error(f"zero division 2")
         log.debug(f"{racer_data[right_pin].speed} = ({racer_data[right_pin].distance} - " +
                   "{racer_data[right_pin].lastDistance}) / 1000000 / " +
                   "({racer_data[right_pin].time} - {racer_data[right_pin].lastTime}) / 3600")
@@ -350,6 +355,7 @@ def pre_start_cleanup():
         racer.lastTime = 0.0
         racer.lastDistance = 0.0
         racer.maxSpeed = 0.0
+        racer.falseStart = False
 
 
 if not MACOSX:
