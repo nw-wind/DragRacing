@@ -15,7 +15,6 @@ import sys
 import time
 from datetime import datetime
 import logging
-from itertools import cycle
 
 if MACOSX:
     import random
@@ -53,6 +52,7 @@ circle = diameter * pi
 distance = 402.0 * 1000.0
 
 working = False
+win = None
 
 # Классы
 
@@ -71,52 +71,67 @@ class Racer:
         self.startTime = 0.0
         self.counting = False
         # Для скорости
-        self.lastTime = 0.0
-        self.lastDistance = 0.0
-        self.maxSpeed = 0.0
-        self.falseStart = False
+        self.last_time = 0.0
+        self.last_distance = 0.0
+        self.max_speed = 0.0
+        self.false_start = False
 
 
 racer_data = {left_pin: Racer(left_pin), right_pin: Racer(right_pin)}
 
 
 class TrafficLight(QtWidgets.QDialog):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, color='red'):
         super(TrafficLight, self).__init__(parent)
-        self.already_done = False
         self.setWindowTitle("TrafficLight ")
-        self.traffic_light_colors = cycle([
-            QtGui.QColor('red'),
-            QtGui.QColor('yellow'),
-            QtGui.QColor('green')
-        ])
-        self._current_color = next(self.traffic_light_colors)
-        timer = QtCore.QTimer(
+        self.color = color
+        self.timer = QtCore.QTimer(
             self,
             interval=2000,
-            timeout=self.change_color
+            timeout=self.stop
         )
-        timer.start()
+        self.timer.start()
         self.resize(400, 400)
 
     @QtCore.pyqtSlot()
-    def change_color(self):
-        global working
-        self._current_color = next(self.traffic_light_colors)
-        if self._current_color == QtGui.QColor('red') and self.already_done:
-            log.warning("Светофор открутили.")
-            working = True
-            self.close()
-        else:
-            self.already_done = True
-            log.warning("Светофор сменил цвет.")
-        self.update()
+    def stop(self):
+        log.warning(f"Светофор погасил {self.color}.")
+        self.timer.stop()
+        self.close()
 
     def paintEvent(self, event):
+        log.warning(f"Светофор зажёг {self.color}.")
         p = QtGui.QPainter(self)
-        p.setBrush(self._current_color)
+        p.setBrush(QtGui.QColor(self.color))
         p.setPen(QtCore.Qt.black)
         p.drawEllipse(self.rect().center(), 150, 150)
+
+
+class FalseStart(QtWidgets.QDialog):
+    def __init__(self, parent=None, text='Фальстарт!'):
+        super(TrafficLight, self).__init__(parent)
+        self.setWindowTitle(f"Фальстарт: {text}")
+        self.text = text
+        self.timer = QtCore.QTimer(
+            self,
+            interval=5000,
+            timeout=self.stop
+        )
+        self.timer.start()
+        self.resize(400, 400)
+
+    @QtCore.pyqtSlot()
+    def stop(self):
+        log.warning(f"Светофор погасил {self.color}.")
+        self.timer.stop()
+        self.close()
+
+    def paintEvent(self, event):
+        log.warning(f"Светофор зажёг {self.color}.")
+        p = QtGui.QPainter(self)
+        p.setBrush(QtGui.QColor('red'))
+        p.setPen(QtCore.Qt.black)
+        p.drawText(self.rect().center(), QtCore.Qt.AlignCenter, self.text)
 
 
 class Signal(object):
@@ -130,8 +145,9 @@ class Signal(object):
         log.debug(f"Сигналы от {pin}.")
 
     def interrupt(self, pin):
+        global working
         if self.pin == pin and racer_data[self.pin].counting:
-            log.debug(f"Interrupt {pin}/{self.pin} {racer_data[self.pin].counting} ="
+            log.debug(f"Interrupt {pin}/{self.pin} {racer_data[self.pin].counting} =" +
                       f"{racer_data[self.pin].rotations} {racer_data[self.pin].distance} {distance} ")
             racer_data[self.pin].rotations += 1
             racer_data[self.pin].distance = racer_data[self.pin].rotations * circle
@@ -146,11 +162,11 @@ class Signal(object):
             log.debug(f"Interrupt {self.pin}, count={racer_data[self.pin].rotations}")
         else:
             # Здесь фальстарт!
-            log.debug(f"Missing int call {self.pin} vs {pin} and {racer_data[self.pin].counting}. Фальстарт!")
-            if not racer_data[self.pin].falseStart:
-                racer_data[self.pin].falseStart = True
-                log.info(f"Гонщик {racer_data[self.pin].name} поспешил!")
-            pass
+            if not working:
+                log.warning(f"Missing int call {self.pin} vs {pin} and {racer_data[self.pin].counting}. Фальстарт!")
+                if not racer_data[self.pin].false_start:
+                    log.info(f"Гонщик {racer_data[self.pin].name} поспешил!")
+                    racer_data[self.pin].false_start = True
 
 
 class Dialog(QtWidgets.QDialog):
@@ -223,14 +239,14 @@ class Ui(QtWidgets.QMainWindow):
         if racer.pin == left_pin:
             self.leftName.setText(racer.name)
             self.leftModel.setText(racer.model)
-            self.leftSpeed.setText(str(racer.maxSpeed))
+            self.leftSpeed.setText(str(racer.max_speed))
             self.leftDistance.setText(str(racer.distance))
             self.leftTime.setText(str(racer.time))
             self.leftBar.setValue(int(racer.distance))
         else:
             self.rightName.setText(racer.name)
             self.rightModel.setText(racer.model)
-            self.rightSpeed.setText(str(racer.maxSpeed))
+            self.rightSpeed.setText(str(racer.max_speed))
             self.rightDistance.setText(str(racer.distance))
             self.rightTime.setText(str(racer.time))
             self.rightBar.setValue(int(racer.distance))
@@ -258,11 +274,19 @@ class Ui(QtWidgets.QMainWindow):
         global reportFile
         global working
         log.warning("Светофор включаем.")
-        w = TrafficLight(self)
+        w = TrafficLight(parent=self, color='red')
         w.exec_()
-        log.warning(f"Светофор отработал. {working}")
-        log.warning(f"Светофор отработал. Можно стартовать. {working}")
-        if racer_data[left_pin].falseStart or racer_data[right_pin].falseStart:
+        log.warning(f"Светофор красный отработал.")
+        w = TrafficLight(parent=self, color='yellow')
+        w.exec_()
+        log.warning(f"Светофор жёлтый отработал.")
+        # Старт!
+        working = True
+        w = TrafficLight(parent=self, color='green')
+        w.show()
+        w = None
+        log.warning(f"Светофор зелёный отработал. Можно стартовать. {working}")
+        if racer_data[left_pin].false_start or racer_data[right_pin].false_start:
             log.info("Фальстарт! Остановка гонки.")
             return
         self.thread = QThread()
@@ -287,9 +311,9 @@ class Ui(QtWidgets.QMainWindow):
         try:
             reportFile.write("\t".join([datetime.now().strftime("%c"),
                                         self.left.name, self.left.model,
-                                        str(self.left.maxSpeed), str(self.left.time),
+                                        str(self.left.max_speed), str(self.left.time),
                                         self.right.name, self.right.model,
-                                        str(self.right.maxSpeed), str(self.right.time)]) + "\n")
+                                        str(self.right.max_speed), str(self.right.time)]) + "\n")
         except Exception as e:
             log.error(f"Error with report {e}")
 
@@ -302,46 +326,50 @@ class Ui(QtWidgets.QMainWindow):
         log.debug(f"обновляем...")
         try:
             racer_data[left_pin].speed = ((racer_data[left_pin].distance -
-                                           racer_data[left_pin].lastDistance
+                                           racer_data[left_pin].last_distance
                                            ) / 1000000
-                                          ) / ((racer_data[left_pin].time - racer_data[left_pin].lastTime
+                                          ) / ((racer_data[left_pin].time - racer_data[left_pin].last_time
                                                 ) / 3600
                                                )
         except ZeroDivisionError:
-            log.error(f"zero division на обновлении")
+            log.debug(f"zero division на обновлении {racer_data[left_pin].time} - {racer_data[left_pin].last_time}")
+            log.error("Левый медленно едет.")
         log.debug(f"{racer_data[left_pin].speed} = ({racer_data[left_pin].distance} - " +
-                  "{racer_data[left_pin].lastDistance}) / 1000000 / ({racer_data[left_pin].time} - " +
-                  "{racer_data[left_pin].lastTime}) / 3600")
-        racer_data[left_pin].lastTime = racer_data[left_pin].time
-        racer_data[left_pin].lastDistance = racer_data[left_pin].distance
-        if racer_data[left_pin].speed >= racer_data[left_pin].maxSpeed and \
+                  "{racer_data[left_pin].last_distance}) / 1000000 / ({racer_data[left_pin].time} - " +
+                  "{racer_data[left_pin].last_time}) / 3600")
+        racer_data[left_pin].last_time = racer_data[left_pin].time
+        racer_data[left_pin].last_distance = racer_data[left_pin].distance
+        if racer_data[left_pin].speed >= racer_data[left_pin].max_speed and \
                 racer_data[left_pin].time >= 2 * refreshProgress:
-            racer_data[left_pin].maxSpeed = racer_data[left_pin].speed
+            racer_data[left_pin].max_speed = racer_data[left_pin].speed
 
         try:
             racer_data[right_pin].speed = ((racer_data[right_pin].distance - racer_data[
-                right_pin].lastDistance) / 1000000) / \
-                                          ((racer_data[right_pin].time - racer_data[right_pin].lastTime) / 3600)
+                right_pin].last_distance) / 1000000) / \
+                                          ((racer_data[right_pin].time - racer_data[right_pin].last_time) / 3600)
         except ZeroDivisionError:
-            log.error(f"zero division 2")
+            log.debug(f"zero division на обновлении {racer_data[right_pin].time} - {racer_data[right_pin].last_time}")
+            log.error(f"Правый медленно едет.")
         log.debug(f"{racer_data[right_pin].speed} = ({racer_data[right_pin].distance} - " +
-                  "{racer_data[right_pin].lastDistance}) / 1000000 / " +
-                  "({racer_data[right_pin].time} - {racer_data[right_pin].lastTime}) / 3600")
-        racer_data[right_pin].lastTime = racer_data[right_pin].time
-        racer_data[right_pin].lastDistance = racer_data[right_pin].distance
-        if racer_data[right_pin].speed >= racer_data[right_pin].maxSpeed and \
+                  "{racer_data[right_pin].last_distance}) / 1000000 / " +
+                  "({racer_data[right_pin].time} - {racer_data[right_pin].last_time}) / 3600")
+        racer_data[right_pin].last_time = racer_data[right_pin].time
+        racer_data[right_pin].last_distance = racer_data[right_pin].distance
+        if racer_data[right_pin].speed >= racer_data[right_pin].max_speed and \
                 racer_data[right_pin].time >= 2 * refreshProgress:
-            racer_data[right_pin].maxSpeed = racer_data[right_pin].speed
+            racer_data[right_pin].max_speed = racer_data[right_pin].speed
 
         self.leftBar.setValue(int(racer_data[left_pin].distance / 1000))
-        self.leftSpeed.setText("{:.2f}".format(racer_data[left_pin].maxSpeed))
+        self.leftSpeed.setText("{:.2f}".format(racer_data[left_pin].max_speed))
         self.leftDistance.setText("{:.2f}".format(racer_data[left_pin].distance / 1000))
         self.leftTime.setText("{:.2f}".format(racer_data[left_pin].time))
 
         self.rightBar.setValue(int(racer_data[right_pin].distance / 1000))
-        self.rightSpeed.setText("{:.2f}".format(racer_data[right_pin].maxSpeed))
+        self.rightSpeed.setText("{:.2f}".format(racer_data[right_pin].max_speed))
         self.rightDistance.setText("{:.2f}".format(racer_data[right_pin].distance / 1000))
         self.rightTime.setText("{:.2f}".format(racer_data[right_pin].time))
+        for r in [racer_data[i] for i in [left_pin,right_pin]]:
+            log.info(f"Данные: pin={r.pin} rotations={r.rotations}, startTime={r.startTime}")
 
 
 def pre_start_cleanup():
@@ -354,10 +382,10 @@ def pre_start_cleanup():
         racer.time = 0.0
         racer.startTime = time.time()
         racer.counting = True
-        racer.lastTime = 0.0
-        racer.lastDistance = 0.0
-        racer.maxSpeed = 0.0
-        racer.falseStart = False
+        racer.last_time = 0.0
+        racer.last_distance = 0.0
+        racer.max_speed = 0.0
+        racer.false_start = False
 
 
 if not MACOSX:
