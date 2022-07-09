@@ -276,6 +276,8 @@ class Ui(QtWidgets.QMainWindow):
     def start_race(self):
         global reportFile
         global working
+        for p, r in racer_data.items():
+            r.false_start = False
         log.warning("Светофор включаем.")
         w = TrafficLight(parent=self, color='red', title="На старт...")
         w.exec_()
@@ -375,8 +377,8 @@ class Ui(QtWidgets.QMainWindow):
         self.rightSpeed.setText("{:.2f}".format(racer_data[right_pin].max_speed))
         self.rightDistance.setText("{:.2f}".format(racer_data[right_pin].distance / 1000))
         self.rightTime.setText("{:.2f}".format(racer_data[right_pin].time))
-        for r in [racer_data[i] for i in [left_pin, right_pin]]:
-            log.info(f"Данные: pin={r.pin} rotations={r.rotations}, startTime={r.startTime}")
+        for p, r in racer_data.items():
+            log.info(f"Данные: pin={p} rotations={r.rotations}, startTime={r.startTime}")
 
 
 def pre_start_cleanup():
