@@ -15,6 +15,7 @@ from PyQt5.QtCore import QObject, QThread, pyqtSignal
 import sys
 import time
 from datetime import datetime
+from logger import logging
 
 if MACOSX:
     import random
@@ -22,6 +23,10 @@ else:
     import RPi.GPIO as GPIO
 
 # Глобальное
+
+logging.basicConfig(format='%(levelname).1s: %(module)s:%(lineno)d: %(message)s')
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 racer_data = dict()
 
@@ -79,28 +84,28 @@ class Signal(object):
         self.pin = pin
         self.led = led
         if not MACOSX:
-            print(f"set int {pin}")
+            log.debug(f"set int {pin}")
             GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
             GPIO.add_event_detect(self.pin, GPIO.RISING, callback=self.interrupt, bouncetime=2)
-        print(f"Сигналы от {pin}.")
+        log.debug(f"Сигналы от {pin}.")
 
     def interrupt(self, pin):
         if self.pin == pin and racer_data[self.pin].counting:
-            # print(f"Interrupt {pin}/{self.pin} {racer_data[self.pin].counting} =
-            # {racer_data[self.pin].rotations} {racer_data[self.pin].distance} {distance} ")
+            log.debug(f"Interrupt {pin}/{self.pin} {racer_data[self.pin].counting} ="
+                      f"{racer_data[self.pin].rotations} {racer_data[self.pin].distance} {distance} ")
             racer_data[self.pin].rotations += 1
             racer_data[self.pin].distance = racer_data[self.pin].rotations * circle
             racer_data[self.pin].time = time.time() - racer_data[self.pin].startTime
-            # print(f"{racer_data[self.pin].time} = {time.time()} - {racer_data[self.pin].startTime}")
+            log.debug(f"{racer_data[self.pin].time} = {time.time()} - {racer_data[self.pin].startTime}")
             if racer_data[self.pin].distance >= distance:
                 racer_data[self.pin].counting = False
                 racer_data[self.pin].distance = distance
-                print(f"Закончили считать")
+                log.debug(f"Закончили считать")
             if not MACOSX:
                 GPIO.output(self.led, racer_data[self.pin].rotations % 2)  # Лучше бы на каждый метр...
-            # print(f"Interrupt {self.pin}, count={racer_data[self.pin].rotations}")
+            log.debug(f"Interrupt {self.pin}, count={racer_data[self.pin].rotations}")
         else:
-            # print(f"Missing int call {self.pin} vs {pin}")
+            log.debug(f"Missing int call {self.pin} vs {pin}")
             pass
 
 
@@ -122,7 +127,7 @@ class StartLight(QtWidgets.QDialog):
         self.setStyleSheet(f"background:{color}")
 
     def close_me(self):
-        print("close SL")
+        log.info("close SL")
         self.close()
 
 
@@ -147,7 +152,7 @@ class Worker(QObject):
             self.progress.emit()
             if not (racer_data[left_pin].counting or racer_data[right_pin].counting):
                 # Гонка закончена, оба приехали.
-                print(f"Приехали оба.")
+                log.debug(f"Приехали оба.")
                 break
         self.finished.emit()
 
@@ -189,7 +194,7 @@ class Ui(QtWidgets.QMainWindow):
     def new_race(self):
         d = Dialog()
         if d.exec():
-            print("ok")
+            log.debug("ok")
             self.leftName.setText(d.leftNameEdit.text())
             self.leftModel.setText(d.leftModelEdit.text())
             self.rightName.setText(d.rightNameEdit.text())
@@ -197,7 +202,7 @@ class Ui(QtWidgets.QMainWindow):
             pre_start_cleanup()
             self.report_progress()
         else:
-            print("Ничего не делаем")
+            log.info("Ничего не делаем")
 
     def fin_conn(self):
         self.startButton.setEnabled(True)
@@ -210,7 +215,7 @@ class Ui(QtWidgets.QMainWindow):
         global working
         sl = StartLight()
         for c in ['red', 'yellow', 'green']:
-            print(f"Color={c}")
+            log.debug(f"Color={c}")
             self.timer = QtCore.QTimer(self)
             self.timer.timeout.connect(sl.close_me)
             self.timer.start(2000)
@@ -245,15 +250,15 @@ class Ui(QtWidgets.QMainWindow):
                                         self.right.name, self.right.model,
                                         str(self.right.maxSpeed), str(self.right.time)]) + "\n")
         except Exception as e:
-            print(f"Error with report {e}")
+            log.error(f"Error with report {e}")
 
     def stop_race(self):
         global working
-        print("Остановка")
+        log.info("Остановка")
         working = False
 
     def report_progress(self):
-        print(f"обновляем...")
+        log.debug(f"обновляем...")
         try:
             racer_data[left_pin].speed = ((racer_data[left_pin].distance -
                                            racer_data[left_pin].lastDistance
@@ -262,8 +267,8 @@ class Ui(QtWidgets.QMainWindow):
                                                 ) / 3600
                                                )
         except ZeroDivisionError:
-            print(f"zero division")
-        print(f"{racer_data[left_pin].speed} = ({racer_data[left_pin].distance} - " +
+            log.error(f"zero division")
+        log.debug(f"{racer_data[left_pin].speed} = ({racer_data[left_pin].distance} - " +
               "{racer_data[left_pin].lastDistance}) / 1000000 / ({racer_data[left_pin].time} - " +
               "{racer_data[left_pin].lastTime}) / 3600")
         racer_data[left_pin].lastTime = racer_data[left_pin].time
@@ -277,8 +282,8 @@ class Ui(QtWidgets.QMainWindow):
                 right_pin].lastDistance) / 1000000) / \
                                           ((racer_data[right_pin].time - racer_data[right_pin].lastTime) / 3600)
         except ZeroDivisionError:
-            print(f"zero division")
-        print(f"{racer_data[right_pin].speed} = ({racer_data[right_pin].distance} - " +
+            log.error(f"zero division")
+        log.debug(f"{racer_data[right_pin].speed} = ({racer_data[right_pin].distance} - " +
               "{racer_data[right_pin].lastDistance}) / 1000000 / " +
               "({racer_data[right_pin].time} - {racer_data[right_pin].lastTime}) / 3600")
         racer_data[right_pin].lastTime = racer_data[right_pin].time
@@ -300,7 +305,7 @@ class Ui(QtWidgets.QMainWindow):
 
 def pre_start_cleanup():
     # Очищает всё в момент старта.
-    print("Очистка")
+    log.info("Очистка")
     for pin, racer in racer_data.items():
         racer.rotations = 0
         racer.distance = 0
@@ -314,7 +319,7 @@ def pre_start_cleanup():
 
 
 if not MACOSX:
-    print(f"RPI mode")
+    log.info(f"RPI mode")
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(leftLed, GPIO.OUT)
     GPIO.setup(rightLed, GPIO.OUT)
