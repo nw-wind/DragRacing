@@ -25,7 +25,7 @@ else:
 
 logging.basicConfig(format='%(levelname).1s: %(module)s:%(lineno)d: %(message)s')
 log = logging.getLogger(__name__)
-log.setLevel(logging.INFO)
+log.setLevel(logging.DEBUG)
 
 # Сюда включать датчики.
 left_pin = 23
