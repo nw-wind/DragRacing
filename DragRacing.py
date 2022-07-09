@@ -288,9 +288,10 @@ class Ui(QtWidgets.QMainWindow):
         if racer_data[left_pin].false_start or racer_data[right_pin].false_start:
             log.info("Фальстарт! Остановка гонки.")
             t = "ФАЛЬСТАРТ!\n"
-            t += racer_data[left_pin].name + "\n" if racer_data[left_pin].false_start
-            t += racer_data[right_pin].name + "\n" if racer_data[right_pin].false_start
+            t += racer_data[left_pin].name + "\n" if racer_data[left_pin].false_start else ""
+            t += racer_data[right_pin].name + "\n" if racer_data[right_pin].false_start else ""
             w = FalseStart(parent=self, text=t)
+            w.show()
             return
         self.thread = QThread()
         self.worker = Worker()
@@ -371,7 +372,7 @@ class Ui(QtWidgets.QMainWindow):
         self.rightSpeed.setText("{:.2f}".format(racer_data[right_pin].max_speed))
         self.rightDistance.setText("{:.2f}".format(racer_data[right_pin].distance / 1000))
         self.rightTime.setText("{:.2f}".format(racer_data[right_pin].time))
-        for r in [racer_data[i] for i in [left_pin,right_pin]]:
+        for r in [racer_data[i] for i in [left_pin, right_pin]]:
             log.info(f"Данные: pin={r.pin} rotations={r.rotations}, startTime={r.startTime}")
 
 
