@@ -8,14 +8,14 @@ if platform.system() == 'Darwin':
 else:
     MACOSX = False
 
-from PyQt5 import QtWidgets
 from PyQt5 import uic
-from PyQt5 import QtCore
+from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import QObject, QThread, pyqtSignal
 import sys
 import time
 from datetime import datetime
 import logging
+from itertools import cycle
 
 if MACOSX:
     import random
@@ -26,7 +26,7 @@ else:
 
 logging.basicConfig(format='%(levelname).1s: %(module)s:%(lineno)d: %(message)s')
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+log.setLevel(logging.WARNING)
 
 # Сюда включать датчики.
 left_pin = 23
@@ -79,6 +79,45 @@ class Racer:
 racer_data = {left_pin: Racer(left_pin), right_pin: Racer(right_pin)}
 
 
+class TrafficLight(QtWidgets.QDialog):
+    def __init__(self, parent=None):
+        super(TrafficLight, self).__init__(parent)
+        self.already_done = False
+        self.setWindowTitle("TrafficLight ")
+        self.traffic_light_colors = cycle([
+            QtGui.QColor('red'),
+            QtGui.QColor('yellow'),
+            QtGui.QColor('green')
+        ])
+        self._current_color = next(self.traffic_light_colors)
+        timer = QtCore.QTimer(
+            self,
+            interval=2000,
+            timeout=self.change_color
+        )
+        timer.start()
+        self.resize(400, 400)
+
+    @QtCore.pyqtSlot()
+    def change_color(self):
+        global working
+        self._current_color = next(self.traffic_light_colors)
+        if self._current_color == QtGui.QColor('red') and self.already_done:
+            log.warning("Светофор открутили.")
+            working = True
+            self.close()
+        else:
+            self.already_done = True
+            log.warning("Светофор сменил цвет.")
+        self.update()
+
+    def paintEvent(self, event):
+        p = QtGui.QPainter(self)
+        p.setBrush(self._current_color)
+        p.setPen(QtCore.Qt.black)
+        p.drawEllipse(self.rect().center(), 150, 150)
+
+
 class Signal(object):
     def __init__(self, pin, led):
         self.pin = pin
@@ -105,7 +144,8 @@ class Signal(object):
                 GPIO.output(self.led, racer_data[self.pin].rotations % 2)  # Лучше бы на каждый метр...
             log.debug(f"Interrupt {self.pin}, count={racer_data[self.pin].rotations}")
         else:
-            log.debug(f"Missing int call {self.pin} vs {pin} and {racer_data[self.pin].counting}")
+            # Здесь фальстарт!
+            log.debug(f"Missing int call {self.pin} vs {pin} and {racer_data[self.pin].counting}. Фальстарт!")
             pass
 
 
@@ -166,7 +206,7 @@ class Ui(QtWidgets.QMainWindow):
         self.newButton.clicked.connect(self.new_race)
         self.startButton.clicked.connect(self.start_race)
         self.stopButton.clicked.connect(self.stop_race)
-        # Заполнить горнчегов
+        # Заполнить гончегов
         self.left = racer_data[left_pin] = Racer(left_pin)
         self.fill(self.left)
         self.right = racer_data[right_pin] = Racer(right_pin)
@@ -213,17 +253,11 @@ class Ui(QtWidgets.QMainWindow):
     def start_race(self):
         global reportFile
         global working
-        sl = StartLight()
-        for c in ['red', 'yellow', 'green']:
-            log.debug(f"Color={c}")
-            self.timer = QtCore.QTimer(self)
-            self.timer.timeout.connect(sl.close_me)
-            self.timer.start(2000)
-            sl.set_color(c)
-            sl.show()
-            sl.exec()
-            time.sleep(0.5)
-        working = True
+        log.warning("Светофор включаем.")
+        w = TrafficLight(self)
+        w.exec_()
+        log.warning(f"Светофор отработал. {working}")
+        log.warning(f"Светофор отработал. Можно стартовать. {working}")
         self.thread = QThread()
         self.worker = Worker()
         self.worker.moveToThread(self.thread)
