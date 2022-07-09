@@ -81,9 +81,9 @@ racer_data = {left_pin: Racer(left_pin), right_pin: Racer(right_pin)}
 
 
 class TrafficLight(QtWidgets.QDialog):
-    def __init__(self, parent=None, color='red'):
+    def __init__(self, parent=None, color='red', title="Старт"):
         super(TrafficLight, self).__init__(parent)
-        self.setWindowTitle("На старт...")
+        self.setWindowTitle(title)
         self.color = color
         self.timer = QtCore.QTimer(
             self,
@@ -108,9 +108,9 @@ class TrafficLight(QtWidgets.QDialog):
 
 
 class FalseStart(QtWidgets.QDialog):
-    def __init__(self, parent=None, text='Фальстарт!'):
-        super(TrafficLight, self).__init__(parent)
-        self.setWindowTitle(f"Фальстарт: {text}")
+    def __init__(self, parent=None, text=''):
+        super(FalseStart, self).__init__(parent)
+        self.setWindowTitle(f"Проблема :(")
         self.text = text
         self.timer = QtCore.QTimer(
             self,
@@ -118,20 +118,23 @@ class FalseStart(QtWidgets.QDialog):
             timeout=self.stop
         )
         self.timer.start()
-        self.resize(400, 400)
+        self.resize(600, 400)
 
     @QtCore.pyqtSlot()
     def stop(self):
-        log.warning(f"Светофор погасил {self.color}.")
+        log.warning(f"Фальстарт погасил {self.text}.")
         self.timer.stop()
         self.close()
 
     def paintEvent(self, event):
-        log.warning(f"Светофор зажёг {self.color}.")
+        log.warning(f"Фальстарт зажёг {self.text}.")
         p = QtGui.QPainter(self)
-        p.setBrush(QtGui.QColor('red'))
-        p.setPen(QtCore.Qt.black)
-        p.drawText(self.rect().center(), QtCore.Qt.AlignCenter, self.text)
+        f = p.font()
+        f.setBold(True)
+        f.setPointSize(f.pointSize() * 4)
+        p.setFont(f)
+        p.setPen(QtCore.Qt.red)
+        p.drawText(self.rect(), QtCore.Qt.AlignCenter, self.text)
 
 
 class Signal(object):
@@ -274,15 +277,15 @@ class Ui(QtWidgets.QMainWindow):
         global reportFile
         global working
         log.warning("Светофор включаем.")
-        w = TrafficLight(parent=self, color='red')
+        w = TrafficLight(parent=self, color='red', title="На старт...")
         w.exec_()
         log.warning(f"Светофор красный отработал.")
-        w = TrafficLight(parent=self, color='yellow')
+        w = TrafficLight(parent=self, color='yellow', title="Внимание...")
         w.exec_()
         log.warning(f"Светофор жёлтый отработал.")
         # Старт!
         working = True
-        w = TrafficLight(parent=self, color='green')
+        w = TrafficLight(parent=self, color='green', title="МАРШ!")
         w.show()
         log.warning(f"Светофор зелёный отработал. Можно стартовать. {working}")
         if racer_data[left_pin].false_start or racer_data[right_pin].false_start:
