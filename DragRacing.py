@@ -28,8 +28,6 @@ logging.basicConfig(format='%(levelname).1s: %(module)s:%(lineno)d: %(message)s'
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-racer_data = dict()
-
 # Сюда включать датчики.
 left_pin = 23
 right_pin = 24
@@ -56,7 +54,6 @@ distance = 402.0 * 1000.0
 
 working = False
 
-
 # Классы
 
 # Гонщик и его данные
@@ -77,6 +74,9 @@ class Racer:
         self.lastTime = 0.0
         self.lastDistance = 0.0
         self.maxSpeed = 0.0
+
+
+racer_data = {left_pin: Racer(left_pin), right_pin: Racer(right_pin)}
 
 
 class Signal(object):
@@ -269,8 +269,8 @@ class Ui(QtWidgets.QMainWindow):
         except ZeroDivisionError:
             log.error(f"zero division")
         log.debug(f"{racer_data[left_pin].speed} = ({racer_data[left_pin].distance} - " +
-              "{racer_data[left_pin].lastDistance}) / 1000000 / ({racer_data[left_pin].time} - " +
-              "{racer_data[left_pin].lastTime}) / 3600")
+                  "{racer_data[left_pin].lastDistance}) / 1000000 / ({racer_data[left_pin].time} - " +
+                  "{racer_data[left_pin].lastTime}) / 3600")
         racer_data[left_pin].lastTime = racer_data[left_pin].time
         racer_data[left_pin].lastDistance = racer_data[left_pin].distance
         if racer_data[left_pin].speed >= racer_data[left_pin].maxSpeed and \
@@ -284,8 +284,8 @@ class Ui(QtWidgets.QMainWindow):
         except ZeroDivisionError:
             log.error(f"zero division")
         log.debug(f"{racer_data[right_pin].speed} = ({racer_data[right_pin].distance} - " +
-              "{racer_data[right_pin].lastDistance}) / 1000000 / " +
-              "({racer_data[right_pin].time} - {racer_data[right_pin].lastTime}) / 3600")
+                  "{racer_data[right_pin].lastDistance}) / 1000000 / " +
+                  "({racer_data[right_pin].time} - {racer_data[right_pin].lastTime}) / 3600")
         racer_data[right_pin].lastTime = racer_data[right_pin].time
         racer_data[right_pin].lastDistance = racer_data[right_pin].distance
         if racer_data[right_pin].speed >= racer_data[right_pin].maxSpeed and \
