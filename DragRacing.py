@@ -15,7 +15,7 @@ from PyQt5.QtCore import QObject, QThread, pyqtSignal
 import sys
 import time
 from datetime import datetime
-from logger import logging
+import logging
 
 if MACOSX:
     import random
