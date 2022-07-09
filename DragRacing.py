@@ -26,7 +26,7 @@ else:
 
 logging.basicConfig(format='%(levelname).1s: %(module)s:%(lineno)d: %(message)s')
 log = logging.getLogger(__name__)
-log.setLevel(logging.WARNING)
+log.setLevel(logging.INFO)
 
 # Сюда включать датчики.
 left_pin = 23
@@ -147,7 +147,9 @@ class Signal(object):
         else:
             # Здесь фальстарт!
             log.debug(f"Missing int call {self.pin} vs {pin} and {racer_data[self.pin].counting}. Фальстарт!")
-            racer_data[self.pin].falseStart = True
+            if not racer_data[self.pin].falseStart:
+                racer_data[self.pin].falseStart = True
+                log.info(f"Гонщик {racer_data[self.pin].name} поспешил!")
             pass
 
 
