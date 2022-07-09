@@ -83,7 +83,7 @@ racer_data = {left_pin: Racer(left_pin), right_pin: Racer(right_pin)}
 class TrafficLight(QtWidgets.QDialog):
     def __init__(self, parent=None, color='red'):
         super(TrafficLight, self).__init__(parent)
-        self.setWindowTitle("TrafficLight ")
+        self.setWindowTitle("На старт...")
         self.color = color
         self.timer = QtCore.QTimer(
             self,
@@ -284,10 +284,13 @@ class Ui(QtWidgets.QMainWindow):
         working = True
         w = TrafficLight(parent=self, color='green')
         w.show()
-        w = None
         log.warning(f"Светофор зелёный отработал. Можно стартовать. {working}")
         if racer_data[left_pin].false_start or racer_data[right_pin].false_start:
             log.info("Фальстарт! Остановка гонки.")
+            t = "ФАЛЬСТАРТ!\n"
+            t += racer_data[left_pin].name + "\n" if racer_data[left_pin].false_start
+            t += racer_data[right_pin].name + "\n" if racer_data[right_pin].false_start
+            w = FalseStart(parent=self, text=t)
             return
         self.thread = QThread()
         self.worker = Worker()
