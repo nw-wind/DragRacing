@@ -2,6 +2,7 @@
 # -*- coding:utf-8 -*-
 
 import platform
+
 if platform.system() == 'Darwin':
     MACOSX = True
 else:
@@ -22,11 +23,11 @@ else:
 
 # Глобальное
 
-racerData = dict()
+racer_data = dict()
 
 # Сюда включать датчики.
-leftPin = 23
-rightPin = 24
+left_pin = 23
+right_pin = 24
 
 # Подсветка работы. 
 # Повтор прерываний.
@@ -44,11 +45,12 @@ refreshProgress = 0.2
 raceLoops = int(600 / refreshProgress)
 
 pi = 3.1416826
-diameter = 108.0   # mm
+diameter = 108.0  # mm
 circle = diameter * pi
 distance = 402.0 * 1000.0
 
 working = False
+
 
 # Классы
 
@@ -62,7 +64,7 @@ class Racer:
         self.model = model
         self.rotations = 0
         self.distance = 0
-        self.speed = 0.0    # надо считать
+        self.speed = 0.0  # надо считать
         self.time = 0.0
         self.startTime = 0.0
         self.counting = False
@@ -83,30 +85,32 @@ class Signal(object):
         print(f"Сигналы от {pin}.")
 
     def interrupt(self, pin):
-        if self.pin == pin and racerData[self.pin].counting:
-            #print(f"Interrupt {pin}/{self.pin} {racerData[self.pin].counting} = {racerData[self.pin].rotations} {racerData[self.pin].distance} {distance} ")
-            racerData[self.pin].rotations += 1
-            racerData[self.pin].distance = racerData[self.pin].rotations * circle
-            racerData[self.pin].time = time.time() - racerData[self.pin].startTime
-            #print(f"{racerData[self.pin].time} = {time.time()} - {racerData[self.pin].startTime}")
-            if racerData[self.pin].distance >= distance:
-                racerData[self.pin].counting = False
-                racerData[self.pin].distance = distance
+        if self.pin == pin and racer_data[self.pin].counting:
+            # print(f"Interrupt {pin}/{self.pin} {racer_data[self.pin].counting} =
+            # {racer_data[self.pin].rotations} {racer_data[self.pin].distance} {distance} ")
+            racer_data[self.pin].rotations += 1
+            racer_data[self.pin].distance = racer_data[self.pin].rotations * circle
+            racer_data[self.pin].time = time.time() - racer_data[self.pin].startTime
+            # print(f"{racer_data[self.pin].time} = {time.time()} - {racer_data[self.pin].startTime}")
+            if racer_data[self.pin].distance >= distance:
+                racer_data[self.pin].counting = False
+                racer_data[self.pin].distance = distance
                 print(f"Закончили считать")
             if not MACOSX:
-                GPIO.output(self.led, racerData[self.pin].rotations % 2)    # Лучше бы на каждый метр...
-            #print(f"Interrupt {self.pin}, count={racerData[self.pin].rotations}")
+                GPIO.output(self.led, racer_data[self.pin].rotations % 2)  # Лучше бы на каждый метр...
+            # print(f"Interrupt {self.pin}, count={racer_data[self.pin].rotations}")
         else:
-            #print(f"Missing int call {self.pin} vs {pin}")
+            # print(f"Missing int call {self.pin} vs {pin}")
             pass
 
 
 class Dialog(QtWidgets.QDialog):
     def __init__(self):
-        super(Dialog, self).__init__() 
+        super(Dialog, self).__init__()
         uic.loadUi('dialog.ui', self)
         self.show()
         self.setWindowTitle("Новая гонка, запись участников...")
+
 
 class StartLight(QtWidgets.QDialog):
     def __init__(self):
@@ -114,12 +118,13 @@ class StartLight(QtWidgets.QDialog):
         uic.loadUi('StartLight.ui', self)
         self.setWindowTitle("На старт...")
 
-    def setColor(self, color):
+    def set_color(self, color):
         self.setStyleSheet(f"background:{color}")
 
-    def closeMe(self):
+    def close_me(self):
         print("close SL")
         self.close()
+
 
 class Worker(QObject):
     finished = pyqtSignal()
@@ -128,19 +133,19 @@ class Worker(QObject):
     def run(self):
         pre_start_cleanup()
         win.startButton.setText("Поехали...")
-        for i in range(raceLoops):    # время гонки
+        for i in range(raceLoops):  # время гонки
             if not working:
                 break
             time.sleep(refreshProgress)
             if MACOSX:
-                for fake in range(random.randint(50,100)):
-                    leftData.interrupt(leftPin)
-                    #time.sleep(0.01)
+                for fake in range(random.randint(50, 100)):
+                    leftData.interrupt(left_pin)
+                    # time.sleep(0.01)
                 for fake in range(random.randint(20, 70)):
-                    rightData.interrupt(rightPin)
-                    #time.sleep(0.01)
+                    rightData.interrupt(right_pin)
+                    # time.sleep(0.01)
             self.progress.emit()
-            if not (racerData[leftPin].counting or racerData[rightPin].counting):
+            if not (racer_data[left_pin].counting or racer_data[right_pin].counting):
                 # Гонка закончена, оба приехали.
                 print(f"Приехали оба.")
                 break
@@ -157,16 +162,16 @@ class Ui(QtWidgets.QMainWindow):
         self.startButton.clicked.connect(self.start_race)
         self.stopButton.clicked.connect(self.stop_race)
         # Заполнить горнчегов
-        self.left = racerData[leftPin] = Racer(leftPin)
+        self.left = racer_data[left_pin] = Racer(left_pin)
         self.fill(self.left)
-        self.right = racerData[rightPin] = Racer(rightPin)
+        self.right = racer_data[right_pin] = Racer(right_pin)
         self.fill(self.right)
         # пыщ!
         # self.showMaximized()
         self.showFullScreen()
 
     def fill(self, racer):
-        if racer.pin == leftPin:
+        if racer.pin == left_pin:
             self.leftName.setText(racer.name)
             self.leftModel.setText(racer.model)
             self.leftSpeed.setText(str(racer.maxSpeed))
@@ -207,9 +212,9 @@ class Ui(QtWidgets.QMainWindow):
         for c in ['red', 'yellow', 'green']:
             print(f"Color={c}")
             self.timer = QtCore.QTimer(self)
-            self.timer.timeout.connect(sl.closeMe)
+            self.timer.timeout.connect(sl.close_me)
             self.timer.start(2000)
-            sl.setColor(c)
+            sl.set_color(c)
             sl.show()
             sl.exec()
             time.sleep(0.5)
@@ -235,8 +240,10 @@ class Ui(QtWidgets.QMainWindow):
         # Запись отчёта.
         try:
             reportFile.write("\t".join([datetime.now().strftime("%c"),
-                                        self.left.name, self.left.model, str(self.left.maxSpeed), str(self.left.time),
-                                        self.right.name, self.right.model, str(self.right.maxSpeed), str(self.right.time)])+"\n")
+                                        self.left.name, self.left.model,
+                                        str(self.left.maxSpeed), str(self.left.time),
+                                        self.right.name, self.right.model,
+                                        str(self.right.maxSpeed), str(self.right.time)]) + "\n")
         except Exception as e:
             print(f"Error with report {e}")
 
@@ -248,41 +255,53 @@ class Ui(QtWidgets.QMainWindow):
     def report_progress(self):
         print(f"обновляем...")
         try:
-            racerData[leftPin].speed = ((racerData[leftPin].distance - racerData[leftPin].lastDistance) / 1000000) / \
-                                       ((racerData[leftPin].time - racerData[leftPin].lastTime) / 3600)
+            racer_data[left_pin].speed = ((racer_data[left_pin].distance -
+                                           racer_data[left_pin].lastDistance
+                                           ) / 1000000
+                                          ) / ((racer_data[left_pin].time - racer_data[left_pin].lastTime
+                                                ) / 3600
+                                               )
         except ZeroDivisionError:
             print(f"zero division")
-        print(f"{racerData[leftPin].speed} = ({racerData[leftPin].distance} - {racerData[leftPin].lastDistance}) / 1000000 / ({racerData[leftPin].time} - {racerData[leftPin].lastTime}) / 3600")
-        racerData[leftPin].lastTime = racerData[leftPin].time
-        racerData[leftPin].lastDistance = racerData[leftPin].distance
-        if racerData[leftPin].speed >= racerData[leftPin].maxSpeed and racerData[leftPin].time >= 2*refreshProgress:
-            racerData[leftPin].maxSpeed = racerData[leftPin].speed
+        print(f"{racer_data[left_pin].speed} = ({racer_data[left_pin].distance} - " +
+              "{racer_data[left_pin].lastDistance}) / 1000000 / ({racer_data[left_pin].time} - " +
+              "{racer_data[left_pin].lastTime}) / 3600")
+        racer_data[left_pin].lastTime = racer_data[left_pin].time
+        racer_data[left_pin].lastDistance = racer_data[left_pin].distance
+        if racer_data[left_pin].speed >= racer_data[left_pin].maxSpeed and \
+                racer_data[left_pin].time >= 2 * refreshProgress:
+            racer_data[left_pin].maxSpeed = racer_data[left_pin].speed
 
         try:
-            racerData[rightPin].speed = ((racerData[rightPin].distance - racerData[rightPin].lastDistance) / 1000000) / \
-                                         ((racerData[rightPin].time - racerData[rightPin].lastTime) / 3600)
+            racer_data[right_pin].speed = ((racer_data[right_pin].distance - racer_data[
+                right_pin].lastDistance) / 1000000) / \
+                                          ((racer_data[right_pin].time - racer_data[right_pin].lastTime) / 3600)
         except ZeroDivisionError:
             print(f"zero division")
-        print(f"{racerData[rightPin].speed} = ({racerData[rightPin].distance} - {racerData[rightPin].lastDistance}) / 1000000 / ({racerData[rightPin].time} - {racerData[rightPin].lastTime}) / 3600")
-        racerData[rightPin].lastTime = racerData[rightPin].time
-        racerData[rightPin].lastDistance = racerData[rightPin].distance
-        if racerData[rightPin].speed >= racerData[rightPin].maxSpeed and racerData[rightPin].time >= 2*refreshProgress:
-            racerData[rightPin].maxSpeed = racerData[rightPin].speed
+        print(f"{racer_data[right_pin].speed} = ({racer_data[right_pin].distance} - " +
+              "{racer_data[right_pin].lastDistance}) / 1000000 / " +
+              "({racer_data[right_pin].time} - {racer_data[right_pin].lastTime}) / 3600")
+        racer_data[right_pin].lastTime = racer_data[right_pin].time
+        racer_data[right_pin].lastDistance = racer_data[right_pin].distance
+        if racer_data[right_pin].speed >= racer_data[right_pin].maxSpeed and \
+                racer_data[right_pin].time >= 2 * refreshProgress:
+            racer_data[right_pin].maxSpeed = racer_data[right_pin].speed
 
-        self.leftBar.setValue(int(racerData[leftPin].distance / 1000))
-        self.leftSpeed.setText("{:.2f}".format(racerData[leftPin].maxSpeed))
-        self.leftDistance.setText("{:.2f}".format(racerData[leftPin].distance / 1000))
-        self.leftTime.setText("{:.2f}".format(racerData[leftPin].time))
+        self.leftBar.setValue(int(racer_data[left_pin].distance / 1000))
+        self.leftSpeed.setText("{:.2f}".format(racer_data[left_pin].maxSpeed))
+        self.leftDistance.setText("{:.2f}".format(racer_data[left_pin].distance / 1000))
+        self.leftTime.setText("{:.2f}".format(racer_data[left_pin].time))
 
-        self.rightBar.setValue(int(racerData[rightPin].distance / 1000))
-        self.rightSpeed.setText("{:.2f}".format(racerData[rightPin].maxSpeed))
-        self.rightDistance.setText("{:.2f}".format(racerData[rightPin].distance / 1000))
-        self.rightTime.setText("{:.2f}".format(racerData[rightPin].time))
+        self.rightBar.setValue(int(racer_data[right_pin].distance / 1000))
+        self.rightSpeed.setText("{:.2f}".format(racer_data[right_pin].maxSpeed))
+        self.rightDistance.setText("{:.2f}".format(racer_data[right_pin].distance / 1000))
+        self.rightTime.setText("{:.2f}".format(racer_data[right_pin].time))
+
 
 def pre_start_cleanup():
     # Очищает всё в момент старта.
     print("Очистка")
-    for pin, racer in racerData.items():
+    for pin, racer in racer_data.items():
         racer.rotations = 0
         racer.distance = 0
         racer.speed = 0.0
@@ -293,13 +312,14 @@ def pre_start_cleanup():
         racer.lastDistance = 0.0
         racer.maxSpeed = 0.0
 
+
 if not MACOSX:
     print(f"RPI mode")
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(leftLed, GPIO.OUT)
     GPIO.setup(rightLed, GPIO.OUT)
-leftData = Signal(leftPin, leftLed)
-rightData = Signal(rightPin, rightLed)
+leftData = Signal(left_pin, leftLed)
+rightData = Signal(right_pin, rightLed)
 
 # Гуй
 app = QtWidgets.QApplication([])
