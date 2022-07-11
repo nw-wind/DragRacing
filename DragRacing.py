@@ -157,29 +157,9 @@ class FalseStart(QtWidgets.QDialog):
         p.drawText(self.rect(), QtCore.Qt.AlignCenter, self.text)
 
 
-# class CommunicateButtons(QObject):
-#    start_app = pyqtSignal()
-#    stop_app = pyqtSignal()
-
-
-class SignalKnob(object):
-    def __init__(self, w, pin, act=None):
-        self.win = w
-        self.pin = pin
-        self.act = act
-        if not MACOSX:
-            log.debug(f"knob set int {pin}")
-            GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-            GPIO.add_event_detect(self.pin, GPIO.RISING, callback=self.interrupt, bouncetime=2)
-        log.debug(f"Knob Сигналы от {pin}.")
-
-    def interrupt(self, pin):
-        if pin == self.pin:
-            log.debug(f"Нажали {pin} {self.act}")
-            if self.act == 'start':
-                self.win.startButton.clicked.emit()
-            if self.act == 'stop':
-                self.win.stopButton.clicked.emit()
+class CommunicateButtons(QObject):
+    start_app = pyqtSignal()
+    stop_app = pyqtSignal()
 
 
 class Signal(object):
@@ -279,11 +259,13 @@ class Ui(QtWidgets.QMainWindow):
         self.fill(self.left)
         self.right = racer_data[right_pin] = Racer(right_pin)
         self.fill(self.right)
-        self.start_knob_obj = SignalKnob(self, startKnob, 'start')
-        self.stop_knob_obj = SignalKnob(self, stopKnob, 'stop')
-        # self.comm = CommunicateButtons()
-        # self.comm.start_app.connect(self.start_race)
-        # self.comm.stop_app.connect(self.stop_race)
+        self.comm = CommunicateButtons()
+        self.comm.start_app.connect(self.start_race)
+        GPIO.setup(startKnob, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+        GPIO.add_event_detect(startKnob, GPIO.RISING, callback=self.comm.start_app.emit, bouncetime=10)
+        self.comm.stop_app.connect(self.stop_race)
+        GPIO.setup(stopKnob, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+        GPIO.add_event_detect(stopKnob, GPIO.RISING, callback=self.comm.stop_app.emit, bouncetime=10)
         # пыщ!
         # self.showMaximized()
         self.showFullScreen()
