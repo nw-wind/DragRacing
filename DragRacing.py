@@ -288,6 +288,12 @@ class Ui(QtWidgets.QMainWindow):
             self.report_progress()
         else:
             log.info("Ничего не делаем")
+        # Старт -
+        # Настройка -
+        # Готов *
+        led_off(startLed)
+        led_off(setUpLed)
+        led_on(readyLed)
 
     def fin_conn(self):
         # Старт -
