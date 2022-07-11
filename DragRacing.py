@@ -157,6 +157,11 @@ class FalseStart(QtWidgets.QDialog):
         p.drawText(self.rect(), QtCore.Qt.AlignCenter, self.text)
 
 
+class CommunicateButtons(QObject):
+    start_app = pyqtSignal()
+    stop_obj = pyqtSignal()
+
+
 class SignalKnob(object):
     def __init__(self, pin, act=None):
         self.pin = pin
@@ -171,9 +176,9 @@ class SignalKnob(object):
         if pin == self.pin:
             log.debug(f"Нажали {pin} {self.act}")
             if self.act == 'start':
-                win.start_race()
+                win.comm.start_app.emit()
             if self.act == 'stop':
-                win.stop_race()
+                win.comm.stop_app.emit()
 
 
 class Signal(object):
@@ -273,6 +278,9 @@ class Ui(QtWidgets.QMainWindow):
         self.fill(self.left)
         self.right = racer_data[right_pin] = Racer(right_pin)
         self.fill(self.right)
+        self.comm = CommunicateButtons()
+        self.comm.start_app.connect(self.start_race)
+        self.comm.stop_app.connect(self.stop_race)
         # пыщ!
         # self.showMaximized()
         self.showFullScreen()
