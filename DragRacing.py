@@ -37,13 +37,18 @@ leftLed = 20
 rightLed = 21
 # Работа:
 # Готовность: Зелёный. Гаснет при нажатии старта. Зажигается, когда новая гонка прописана.
-# Старт: Красный.
-# Стоп - красный гаснет.
-readyLed = 4
-startLed = 22
-setUpLed = 25
+# Старт: Красный. Стоп - красный гаснет.
+# Сетап - настройка идёт
+readyLed = 17
+startLed = 27
+setUpLed = 22
 
-refreshProgress = 0.2
+# Светофор
+tl_red = 13
+tl_yellow = 19
+tl_green = 26
+
+refreshProgress = 0.1
 raceLoops = int(600 / refreshProgress)
 
 pi = 3.1416826
@@ -80,11 +85,20 @@ class Racer:
 racer_data = {left_pin: Racer(left_pin), right_pin: Racer(right_pin)}
 
 
+def led_on(led):
+    GPIO.output(led, 1)
+
+
+def led_off(led):
+    GPIO.output(led, 0)
+
+
 class TrafficLight(QtWidgets.QDialog):
-    def __init__(self, parent=None, color='red', title="Старт"):
+    def __init__(self, parent=None, color='red', title="Старт", led=None):
         super(TrafficLight, self).__init__(parent)
         self.setWindowTitle(title)
         self.color = color
+        self.led = led
         self.timer = QtCore.QTimer(
             self,
             interval=2000,
@@ -95,11 +109,13 @@ class TrafficLight(QtWidgets.QDialog):
 
     @QtCore.pyqtSlot()
     def stop(self):
+        led_off(self.led)
         log.warning(f"Светофор погасил {self.color}.")
         self.timer.stop()
         self.close()
 
     def paintEvent(self, event):
+        led_on(self.led)
         log.warning(f"Светофор зажёг {self.color}.")
         p = QtGui.QPainter(self)
         p.setBrush(QtGui.QColor(self.color))
@@ -255,6 +271,12 @@ class Ui(QtWidgets.QMainWindow):
             self.rightBar.setValue(int(racer.distance))
 
     def new_race(self):
+        # Старт -
+        # Настройка *
+        # Готов -
+        led_off(startLed)
+        led_on(setUpLed)
+        led_off(readyLed)
         d = Dialog()
         if d.exec():
             log.debug("ok")
@@ -268,6 +290,12 @@ class Ui(QtWidgets.QMainWindow):
             log.info("Ничего не делаем")
 
     def fin_conn(self):
+        # Старт -
+        # Настройка -
+        # Готов *
+        led_off(startLed)
+        led_off(setUpLed)
+        led_on(readyLed)
         self.startButton.setEnabled(True)
         self.startButton.setText("Старт!")
         self.stopButton.setEnabled(False)
@@ -276,18 +304,25 @@ class Ui(QtWidgets.QMainWindow):
     def start_race(self):
         global reportFile
         global working
+        # Старт *
+        # Настройка -
+        # Готов -
+        led_on(startLed)
+        led_off(setUpLed)
+        led_off(readyLed)
+        #
         for p, r in racer_data.items():
             r.false_start = False
         log.warning("Светофор включаем.")
-        w = TrafficLight(parent=self, color='red', title="На старт...")
+        w = TrafficLight(parent=self, color='red', title="На старт...", led=tl_red)
         w.exec_()
         log.warning(f"Светофор красный отработал.")
-        w = TrafficLight(parent=self, color='yellow', title="Внимание...")
+        w = TrafficLight(parent=self, color='yellow', title="Внимание...", led=tl_yellow)
         w.exec_()
         log.warning(f"Светофор жёлтый отработал.")
         # Старт!
         working = True
-        w = TrafficLight(parent=self, color='green', title="МАРШ!")
+        w = TrafficLight(parent=self, color='green', title="МАРШ!", led=tl_green)
         w.show()
         log.warning(f"Светофор зелёный отработал. Можно стартовать. {working}")
         if racer_data[left_pin].false_start or racer_data[right_pin].false_start:
@@ -360,7 +395,8 @@ class Ui(QtWidgets.QMainWindow):
                     right_pin].last_distance) / 1000000) / \
                                               ((racer_data[right_pin].time - racer_data[right_pin].last_time) / 3600)
             except ZeroDivisionError:
-                log.debug(f"zero division на обновлении {racer_data[right_pin].time} - {racer_data[right_pin].last_time}")
+                log.debug(f"zero division на обновлении "
+                          "{racer_data[right_pin].time} - {racer_data[right_pin].last_time}")
             log.debug(f"{racer_data[right_pin].speed} = ({racer_data[right_pin].distance} - " +
                       "{racer_data[right_pin].last_distance}) / 1000000 / " +
                       "({racer_data[right_pin].time} - {racer_data[right_pin].last_time}) / 3600")
@@ -406,12 +442,25 @@ if not MACOSX:
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(leftLed, GPIO.OUT)
     GPIO.setup(rightLed, GPIO.OUT)
+    GPIO.setup(tl_red, GPIO.OUT)
+    GPIO.setup(tl_yellow, GPIO.OUT)
+    GPIO.setup(tl_green, GPIO.OUT)
+    GPIO.setup(readyLed, GPIO.OUT)
+    GPIO.setup(startLed, GPIO.OUT)
+    GPIO.setup(setUpLed, GPIO.OUT)
 leftData = Signal(left_pin, leftLed)
 rightData = Signal(right_pin, rightLed)
 
 # Гуй
 app = QtWidgets.QApplication([])
 win = Ui()
+# Старт -
+# Настройка -
+# Готов *
+led_off(startLed)
+led_off(setUpLed)
+led_on(readyLed)
+#
 # Надо нажать New... или заполнить поля.
 win.startButton.setEnabled(True)
 win.stopButton.setEnabled(False)
