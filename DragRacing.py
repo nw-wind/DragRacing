@@ -48,6 +48,10 @@ tl_red = 13
 tl_yellow = 19
 tl_green = 26
 
+# Кнопки
+startKnob = 5
+stopKnob = 6
+
 refreshProgress = 0.1
 raceLoops = int(600 / refreshProgress)
 
@@ -152,6 +156,21 @@ class FalseStart(QtWidgets.QDialog):
         p.setPen(QtCore.Qt.red)
         p.drawText(self.rect(), QtCore.Qt.AlignCenter, self.text)
 
+class SignalKnob(object):
+    def __init__(self, pin, knob=None):
+        self.pin = pin
+        self.knob = knob
+        if not MACOSX:
+            log.debug(f"knob set int {pin}")
+            GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+            GPIO.add_event_detect(self.pin, GPIO.RISING, callback=self.interrupt, bouncetime=2)
+        log.debug(f"Knob Сигналы от {pin}.")
+
+    def interrupt(self, pin):
+        if pin == self.pin:
+            log.debug(f"Нажали {pin}")
+            knob.emit()
+
 
 class Signal(object):
     def __init__(self, pin, led):
@@ -250,6 +269,10 @@ class Ui(QtWidgets.QMainWindow):
         self.fill(self.left)
         self.right = racer_data[right_pin] = Racer(right_pin)
         self.fill(self.right)
+        self.start_knob = pyqtSignal()
+        self.stop_knob = pyqtSignal()
+        self.start_knob.connect(self.start_race)
+        self.stop_knob.connect(self.stop_race)
         # пыщ!
         # self.showMaximized()
         self.showFullScreen()
@@ -467,6 +490,8 @@ led_off(startLed)
 led_off(setUpLed)
 led_on(readyLed)
 #
+start_knob_obj = SignalKnob(startKnob, win.start_knob)
+stop_knob_obj = SignalKnob(stopKnob, win.stop_knob)
 # Надо нажать New... или заполнить поля.
 win.startButton.setEnabled(True)
 win.stopButton.setEnabled(False)
