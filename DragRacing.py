@@ -264,10 +264,10 @@ class Ui(QtWidgets.QMainWindow):
         self.comm = CommunicateButtons()
         self.start_app.connect(self.start_race)
         GPIO.setup(startKnob, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-        GPIO.add_event_detect(startKnob, GPIO.RISING, callback=self.start_app.emit, bouncetime=10)
+        GPIO.add_event_detect(startKnob, GPIO.RISING, callback=self.start_app.emit, bouncetime=100)
         self.comm.stop_app.connect(self.stop_race)
         GPIO.setup(stopKnob, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-        GPIO.add_event_detect(stopKnob, GPIO.RISING, callback=self.comm.stop_app.emit, bouncetime=10)
+        GPIO.add_event_detect(stopKnob, GPIO.RISING, callback=self.comm.stop_app.emit, bouncetime=100)
         # пыщ!
         # self.showMaximized()
         self.showFullScreen()
