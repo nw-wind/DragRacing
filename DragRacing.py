@@ -179,7 +179,7 @@ class SignalKnob(object):
             if self.act == 'start':
                 self.win.startButton.clicked.emit()
             if self.act == 'stop':
-                self.win.stopButton.clicked.emit())
+                self.win.stopButton.clicked.emit()
 
 
 class Signal(object):
