@@ -11,7 +11,8 @@ else:
 from PyQt5 import uic
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import QObject, QThread, pyqtSignal
-import sys, os
+import sys
+import os
 import time
 from datetime import datetime
 import logging
