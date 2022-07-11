@@ -157,13 +157,14 @@ class FalseStart(QtWidgets.QDialog):
         p.drawText(self.rect(), QtCore.Qt.AlignCenter, self.text)
 
 
-class CommunicateButtons(QObject):
-    start_app = pyqtSignal()
-    stop_app = pyqtSignal()
+# class CommunicateButtons(QObject):
+#    start_app = pyqtSignal()
+#    stop_app = pyqtSignal()
 
 
 class SignalKnob(object):
-    def __init__(self, pin, act=None):
+    def __init__(self, w, pin, act=None):
+        self.win = w
         self.pin = pin
         self.act = act
         if not MACOSX:
@@ -176,9 +177,9 @@ class SignalKnob(object):
         if pin == self.pin:
             log.debug(f"Нажали {pin} {self.act}")
             if self.act == 'start':
-                win.comm.start_app.emit()
+                self.win.newButton.clicked.emit()
             if self.act == 'stop':
-                win.comm.stop_app.emit()
+                self.win.stop_app.emit()
 
 
 class Signal(object):
@@ -278,9 +279,11 @@ class Ui(QtWidgets.QMainWindow):
         self.fill(self.left)
         self.right = racer_data[right_pin] = Racer(right_pin)
         self.fill(self.right)
-        self.comm = CommunicateButtons()
-        self.comm.start_app.connect(self.start_race)
-        self.comm.stop_app.connect(self.stop_race)
+        self.start_knob_obj = SignalKnob(self, startKnob, 'start')
+        self.stop_knob_obj = SignalKnob(self, stopKnob, 'stop')
+        # self.comm = CommunicateButtons()
+        # self.comm.start_app.connect(self.start_race)
+        # self.comm.stop_app.connect(self.stop_race)
         # пыщ!
         # self.showMaximized()
         self.showFullScreen()
@@ -498,8 +501,6 @@ led_off(startLed)
 led_off(setUpLed)
 led_on(readyLed)
 #
-start_knob_obj = SignalKnob(startKnob, 'start')
-stop_knob_obj = SignalKnob(stopKnob, 'stop')
 # Надо нажать New... или заполнить поля.
 win.startButton.setEnabled(True)
 win.stopButton.setEnabled(False)
