@@ -169,8 +169,11 @@ class SignalKnob(object):
 
     def interrupt(self, pin):
         if pin == self.pin:
-            log.debug(f"Нажали {pin}")
-            self.act()
+            log.debug(f"Нажали {pin} {self.act}")
+            if self.act == 'start':
+                win.start_race()
+            if self.act == 'stop':
+                win.stop_race()
 
 
 class Signal(object):
@@ -487,8 +490,8 @@ led_off(startLed)
 led_off(setUpLed)
 led_on(readyLed)
 #
-start_knob_obj = SignalKnob(startKnob, win.start_race)
-stop_knob_obj = SignalKnob(stopKnob, win.stop_race)
+start_knob_obj = SignalKnob(startKnob, 'start')
+stop_knob_obj = SignalKnob(stopKnob, 'stop')
 # Надо нажать New... или заполнить поля.
 win.startButton.setEnabled(True)
 win.stopButton.setEnabled(False)
