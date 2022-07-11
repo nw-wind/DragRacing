@@ -246,6 +246,7 @@ class Worker(QObject):
 
 
 class Ui(QtWidgets.QMainWindow):
+    start_app = pyqtSignal()
     def __init__(self):
         super(Ui, self).__init__()
         uic.loadUi('DragRacing.ui', self)
@@ -260,9 +261,9 @@ class Ui(QtWidgets.QMainWindow):
         self.right = racer_data[right_pin] = Racer(right_pin)
         self.fill(self.right)
         self.comm = CommunicateButtons()
-        self.comm.start_app.connect(self.start_race)
+        self.start_app.connect(self.start_race)
         GPIO.setup(startKnob, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-        GPIO.add_event_detect(startKnob, GPIO.RISING, callback=self.comm.start_app.emit, bouncetime=10)
+        GPIO.add_event_detect(startKnob, GPIO.RISING, callback=self.start_app.emit, bouncetime=10)
         self.comm.stop_app.connect(self.stop_race)
         GPIO.setup(stopKnob, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
         GPIO.add_event_detect(stopKnob, GPIO.RISING, callback=self.comm.stop_app.emit, bouncetime=10)
