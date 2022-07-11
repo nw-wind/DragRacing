@@ -177,9 +177,9 @@ class SignalKnob(object):
         if pin == self.pin:
             log.debug(f"Нажали {pin} {self.act}")
             if self.act == 'start':
-                self.win.newButton.clicked.emit()
+                self.win.startButton.clicked.emit()
             if self.act == 'stop':
-                self.win.stop_app.emit()
+                self.win.stopButton.clicked.emit())
 
 
 class Signal(object):
