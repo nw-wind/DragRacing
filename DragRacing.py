@@ -159,7 +159,7 @@ class FalseStart(QtWidgets.QDialog):
 
 class CommunicateButtons(QObject):
     start_app = pyqtSignal()
-    stop_obj = pyqtSignal()
+    stop_app = pyqtSignal()
 
 
 class SignalKnob(object):
