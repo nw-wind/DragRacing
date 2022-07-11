@@ -156,6 +156,7 @@ class FalseStart(QtWidgets.QDialog):
         p.setPen(QtCore.Qt.red)
         p.drawText(self.rect(), QtCore.Qt.AlignCenter, self.text)
 
+
 class SignalKnob(object):
     def __init__(self, pin, knob=None):
         self.pin = pin
@@ -169,7 +170,7 @@ class SignalKnob(object):
     def interrupt(self, pin):
         if pin == self.pin:
             log.debug(f"Нажали {pin}")
-            knob.emit()
+            self.knob.emit()
 
 
 class Signal(object):
