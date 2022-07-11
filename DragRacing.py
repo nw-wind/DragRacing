@@ -157,11 +157,6 @@ class FalseStart(QtWidgets.QDialog):
         p.drawText(self.rect(), QtCore.Qt.AlignCenter, self.text)
 
 
-class CommunicateButtons(QObject):
-    start_app = pyqtSignal()
-    stop_app = pyqtSignal()
-
-
 class Signal(object):
     def __init__(self, pin, led):
         self.pin = pin
@@ -247,6 +242,7 @@ class Worker(QObject):
 
 class Ui(QtWidgets.QMainWindow):
     start_app = pyqtSignal(int)
+    stop_app = pyqtSignal(int)
 
     def __init__(self):
         super(Ui, self).__init__()
@@ -261,13 +257,12 @@ class Ui(QtWidgets.QMainWindow):
         self.fill(self.left)
         self.right = racer_data[right_pin] = Racer(right_pin)
         self.fill(self.right)
-        self.comm = CommunicateButtons()
         self.start_app.connect(self.start_race)
         GPIO.setup(startKnob, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
         GPIO.add_event_detect(startKnob, GPIO.RISING, callback=self.start_app.emit, bouncetime=1000)
-        self.comm.stop_app.connect(self.stop_race)
+        self.stop_app.connect(self.stop_race)
         GPIO.setup(stopKnob, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-        GPIO.add_event_detect(stopKnob, GPIO.RISING, callback=self.comm.stop_app.emit, bouncetime=1000)
+        GPIO.add_event_detect(stopKnob, GPIO.RISING, callback=self.stop_app.emit, bouncetime=1000)
         # пыщ!
         # self.showMaximized()
         self.showFullScreen()
