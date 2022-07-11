@@ -11,7 +11,7 @@ else:
 from PyQt5 import uic
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import QObject, QThread, pyqtSignal
-import sys
+import sys, os
 import time
 from datetime import datetime
 import logging
@@ -62,6 +62,8 @@ distance = 402.0 * 1000.0
 
 working = False
 win = None
+
+work_dir = os.path.split(os.path.abspath(os.path.realpath(sys.argv[0])))[0]
 
 # Классы
 
@@ -195,23 +197,9 @@ class Signal(object):
 class Dialog(QtWidgets.QDialog):
     def __init__(self):
         super(Dialog, self).__init__()
-        uic.loadUi('dialog.ui', self)
+        uic.loadUi(f'{work_dir}/dialog.ui', self)
         self.show()
         self.setWindowTitle("Новая гонка, запись участников...")
-
-
-class StartLight(QtWidgets.QDialog):
-    def __init__(self):
-        super(StartLight, self).__init__()
-        uic.loadUi('StartLight.ui', self)
-        self.setWindowTitle("На старт...")
-
-    def set_color(self, color):
-        self.setStyleSheet(f"background:{color}")
-
-    def close_me(self):
-        log.info("close SL")
-        self.close()
 
 
 class Worker(QObject):
@@ -246,7 +234,7 @@ class Ui(QtWidgets.QMainWindow):
 
     def __init__(self):
         super(Ui, self).__init__()
-        uic.loadUi('DragRacing.ui', self)
+        uic.loadUi(f'{work_dir}/DragRacing.ui', self)
         self.thread = None
         self.worker = None
         self.newButton.clicked.connect(self.new_race)
@@ -368,8 +356,6 @@ class Ui(QtWidgets.QMainWindow):
         self.thread.finished.connect(
             self.fin_conn
         )
-        # d = StartLight()
-        # d.exec()
         # Раскраска фамилий.
         # Запись отчёта.
         try:
