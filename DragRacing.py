@@ -351,6 +351,7 @@ class Ui(QtWidgets.QMainWindow):
             t += racer_data[right_pin].name + "\n" if racer_data[right_pin].false_start else ""
             w = FalseStart(parent=self, text=t)
             w.show()
+            self.stop_race()
             return
         self.thread = QThread()
         self.worker = Worker()
