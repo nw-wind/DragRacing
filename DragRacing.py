@@ -333,40 +333,44 @@ class Ui(QtWidgets.QMainWindow):
 
     def report_progress(self):
         log.debug(f"обновляем...")
-        try:
-            racer_data[left_pin].speed = ((racer_data[left_pin].distance -
-                                           racer_data[left_pin].last_distance
-                                           ) / 1000000
-                                          ) / ((racer_data[left_pin].time - racer_data[left_pin].last_time
-                                                ) / 3600
-                                               )
-        except ZeroDivisionError:
-            log.debug(f"zero division на обновлении {racer_data[left_pin].time} - {racer_data[left_pin].last_time}")
-            log.error("Левый медленно едет.")
-        log.debug(f"{racer_data[left_pin].speed} = ({racer_data[left_pin].distance} - " +
-                  "{racer_data[left_pin].last_distance}) / 1000000 / ({racer_data[left_pin].time} - " +
-                  "{racer_data[left_pin].last_time}) / 3600")
-        racer_data[left_pin].last_time = racer_data[left_pin].time
-        racer_data[left_pin].last_distance = racer_data[left_pin].distance
-        if racer_data[left_pin].speed >= racer_data[left_pin].max_speed and \
-                racer_data[left_pin].time >= 2 * refreshProgress:
-            racer_data[left_pin].max_speed = racer_data[left_pin].speed
+        if racer_data[left_pin].time - racer_data[left_pin].last_time != 0:
+            try:
+                racer_data[left_pin].speed = ((racer_data[left_pin].distance -
+                                               racer_data[left_pin].last_distance
+                                               ) / 1000000
+                                              ) / ((racer_data[left_pin].time - racer_data[left_pin].last_time
+                                                    ) / 3600
+                                                   )
+            except ZeroDivisionError:
+                log.debug(f"zero division на обновлении {racer_data[left_pin].time} - {racer_data[left_pin].last_time}")
+            log.debug(f"{racer_data[left_pin].speed} = ({racer_data[left_pin].distance} - " +
+                      "{racer_data[left_pin].last_distance}) / 1000000 / ({racer_data[left_pin].time} - " +
+                      "{racer_data[left_pin].last_time}) / 3600")
+            racer_data[left_pin].last_time = racer_data[left_pin].time
+            racer_data[left_pin].last_distance = racer_data[left_pin].distance
+            if racer_data[left_pin].speed >= racer_data[left_pin].max_speed and \
+                    racer_data[left_pin].time >= 2 * refreshProgress:
+                racer_data[left_pin].max_speed = racer_data[left_pin].speed
+        else:
+            log.info("Левый медленно едет.")
 
-        try:
-            racer_data[right_pin].speed = ((racer_data[right_pin].distance - racer_data[
-                right_pin].last_distance) / 1000000) / \
-                                          ((racer_data[right_pin].time - racer_data[right_pin].last_time) / 3600)
-        except ZeroDivisionError:
-            log.debug(f"zero division на обновлении {racer_data[right_pin].time} - {racer_data[right_pin].last_time}")
+        if racer_data[right_pin].time - racer_data[right_pin].last_time != 0:
+            try:
+                racer_data[right_pin].speed = ((racer_data[right_pin].distance - racer_data[
+                    right_pin].last_distance) / 1000000) / \
+                                              ((racer_data[right_pin].time - racer_data[right_pin].last_time) / 3600)
+            except ZeroDivisionError:
+                log.debug(f"zero division на обновлении {racer_data[right_pin].time} - {racer_data[right_pin].last_time}")
+            log.debug(f"{racer_data[right_pin].speed} = ({racer_data[right_pin].distance} - " +
+                      "{racer_data[right_pin].last_distance}) / 1000000 / " +
+                      "({racer_data[right_pin].time} - {racer_data[right_pin].last_time}) / 3600")
+            racer_data[right_pin].last_time = racer_data[right_pin].time
+            racer_data[right_pin].last_distance = racer_data[right_pin].distance
+            if racer_data[right_pin].speed >= racer_data[right_pin].max_speed and \
+                    racer_data[right_pin].time >= 2 * refreshProgress:
+                racer_data[right_pin].max_speed = racer_data[right_pin].speed
+        else:
             log.error(f"Правый медленно едет.")
-        log.debug(f"{racer_data[right_pin].speed} = ({racer_data[right_pin].distance} - " +
-                  "{racer_data[right_pin].last_distance}) / 1000000 / " +
-                  "({racer_data[right_pin].time} - {racer_data[right_pin].last_time}) / 3600")
-        racer_data[right_pin].last_time = racer_data[right_pin].time
-        racer_data[right_pin].last_distance = racer_data[right_pin].distance
-        if racer_data[right_pin].speed >= racer_data[right_pin].max_speed and \
-                racer_data[right_pin].time >= 2 * refreshProgress:
-            racer_data[right_pin].max_speed = racer_data[right_pin].speed
 
         self.leftBar.setValue(int(racer_data[left_pin].distance / 1000))
         self.leftSpeed.setText("{:.2f}".format(racer_data[left_pin].max_speed))
