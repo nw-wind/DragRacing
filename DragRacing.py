@@ -32,6 +32,14 @@ log.setLevel(logging.DEBUG)
 left_pin = 23
 right_pin = 24
 
+default_input = GPIO.PUD_UP
+# default_input = GPIO.PUD_DOWN
+
+light_on = 0
+light_off = 1
+# light_on = 1
+# light_off = 0
+
 # Подсветка работы. 
 # Повтор прерываний.
 leftLed = 20
@@ -93,11 +101,11 @@ racer_data = {left_pin: Racer(left_pin), right_pin: Racer(right_pin)}
 
 
 def led_on(led):
-    GPIO.output(led, 1)
+    GPIO.output(led, light_on)
 
 
 def led_off(led):
-    GPIO.output(led, 0)
+    GPIO.output(led, light_off)
 
 
 class TrafficLight(QtWidgets.QDialog):
@@ -166,7 +174,7 @@ class Signal(object):
         self.led = led
         if not MACOSX:
             log.debug(f"set int {pin}")
-            GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+            GPIO.setup(self.pin, GPIO.IN, pull_up_down=default_input)
             GPIO.add_event_detect(self.pin, GPIO.RISING, callback=self.interrupt, bouncetime=2)
         log.debug(f"Сигналы от {pin}.")
 
@@ -247,10 +255,10 @@ class Ui(QtWidgets.QMainWindow):
         self.right = racer_data[right_pin] = Racer(right_pin)
         self.fill(self.right)
         self.start_app.connect(self.start_race)
-        GPIO.setup(startKnob, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+        GPIO.setup(startKnob, GPIO.IN, pull_up_down=default_input)
         GPIO.add_event_detect(startKnob, GPIO.RISING, callback=self.start_app.emit, bouncetime=1000)
         self.stop_app.connect(self.stop_race)
-        GPIO.setup(stopKnob, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+        GPIO.setup(stopKnob, GPIO.IN, pull_up_down=default_input)
         GPIO.add_event_detect(stopKnob, GPIO.RISING, callback=self.stop_app.emit, bouncetime=1000)
         # пыщ!
         # self.showMaximized()
@@ -357,7 +365,7 @@ class Ui(QtWidgets.QMainWindow):
         self.thread.finished.connect(
             self.fin_conn
         )
-        # Раскраска фамилий.
+        # Раскраска фамилий?
         # Запись отчёта.
         try:
             reportFile.write("\t".join([datetime.now().strftime("%c"),
@@ -455,6 +463,8 @@ if not MACOSX:
     GPIO.setup(readyLed, GPIO.OUT)
     GPIO.setup(startLed, GPIO.OUT)
     GPIO.setup(setUpLed, GPIO.OUT)
+    for pin in [leftLed, rightLed, tl_red, tl_yellow, tl_green, readyLed, startLed, setUpLed]:
+        GPIO.output(pin, light_off)
 leftData = Signal(left_pin, leftLed)
 rightData = Signal(right_pin, rightLed)
 
