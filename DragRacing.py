@@ -32,13 +32,13 @@ log.setLevel(logging.DEBUG)
 left_pin = 23
 right_pin = 24
 
-default_input = GPIO.PUD_UP
-# default_input = GPIO.PUD_DOWN
+# default_input = GPIO.PUD_UP
+default_input = GPIO.PUD_DOWN
 
-light_on = 0
-light_off = 1
-# light_on = 1
-# light_off = 0
+# light_on = 0
+# light_off = 1
+light_on = 1
+light_off = 0
 
 # Подсветка работы. 
 # Повтор прерываний.
