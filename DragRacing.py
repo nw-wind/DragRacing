@@ -320,6 +320,8 @@ class Ui(QtWidgets.QMainWindow):
     def start_race(self):
         global reportFile
         global working
+        if working:
+            return
         # Старт *
         # Настройка -
         # Готов -
@@ -378,6 +380,8 @@ class Ui(QtWidgets.QMainWindow):
 
     def stop_race(self):
         global working
+        if not working:
+            return
         log.info("Остановка")
         working = False
 
