@@ -145,7 +145,7 @@ class FalseStart(QtWidgets.QDialog):
         self.text = text
         self.timer = QtCore.QTimer(
             self,
-            interval=5000,
+            interval=10000,
             timeout=self.stop
         )
         self.timer.start()
@@ -338,20 +338,21 @@ class Ui(QtWidgets.QMainWindow):
         w = TrafficLight(parent=self, color='yellow', title="Внимание...", led=tl_yellow)
         w.exec_()
         log.warning(f"Светофор жёлтый отработал.")
-        # Старт!
-        working = True
-        w = TrafficLight(parent=self, color='green', title="МАРШ!", led=tl_green)
-        w.show()
-        log.warning(f"Светофор зелёный отработал. Можно стартовать. {working}")
         if racer_data[left_pin].false_start or racer_data[right_pin].false_start:
+            working = False
             log.info("Фальстарт! Остановка гонки.")
             t = "ФАЛЬСТАРТ!\n"
             t += racer_data[left_pin].name + "\n" if racer_data[left_pin].false_start else ""
             t += racer_data[right_pin].name + "\n" if racer_data[right_pin].false_start else ""
             w = FalseStart(parent=self, text=t)
             w.show()
-            self.stop_race()
+            # self.stop_race()
             return
+        # Старт!
+        working = True
+        w = TrafficLight(parent=self, color='green', title="МАРШ!", led=tl_green)
+        w.show()
+        log.warning(f"Светофор зелёный отработал. Можно стартовать. {working}")
         self.thread = QThread()
         self.worker = Worker()
         self.worker.moveToThread(self.thread)
