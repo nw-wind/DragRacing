@@ -323,8 +323,8 @@ class Ui(QtWidgets.QMainWindow):
         global working
         if working:
             return
-        for i in range(5)
-        log.info("Старт...")
+        for i in range(5):
+            log.info("Старт...")
         # Старт *
         # Настройка -
         # Готов -
