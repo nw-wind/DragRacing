@@ -143,6 +143,7 @@ class FalseStart(QtWidgets.QDialog):
         super(FalseStart, self).__init__(parent)
         self.setWindowTitle(f"Проблема :(")
         self.text = text
+        log.warning(f"Фальстарт окошко!.")
         self.timer = QtCore.QTimer(
             self,
             interval=10000,
@@ -322,6 +323,8 @@ class Ui(QtWidgets.QMainWindow):
         global working
         if working:
             return
+        for i in range(5)
+        log.info("Старт...")
         # Старт *
         # Настройка -
         # Готов -
