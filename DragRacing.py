@@ -265,9 +265,9 @@ class Ui(QtWidgets.QMainWindow):
         self.startButton.clicked.connect(self.start_race)
         self.stopButton.clicked.connect(self.stop_race)
         # Заполнить гончегов
-        self.left = racer_data[left_pin] = Racer(left_pin)
+        self.left = racer_data[left_pin] = Racer(left_pin, 'Смелый', 'Коняга')
         self.fill(self.left)
-        self.right = racer_data[right_pin] = Racer(right_pin)
+        self.right = racer_data[right_pin] = Racer(right_pin, 'Сильный', 'Кабан')
         self.fill(self.right)
         self.start_app.connect(self.start_race)
         GPIO.setup(startKnob, GPIO.IN, pull_up_down=GPIO.PUD_UP)
@@ -342,6 +342,7 @@ class Ui(QtWidgets.QMainWindow):
         global reportFile
         global working
         if working:
+            log.info("Хотим старт, а не working.")
             return
         for i in range(5):
             log.info("Старт...")
@@ -405,6 +406,7 @@ class Ui(QtWidgets.QMainWindow):
     def stop_race(self):
         global working
         if not working:
+            log.info("Хотим стоп, но not working.")
             return
         log.info("Остановка")
         working = False
