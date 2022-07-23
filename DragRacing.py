@@ -321,6 +321,8 @@ class Ui(QtWidgets.QMainWindow):
         led_on(readyLed)
 
     def fin_conn(self):
+        global working
+        working = False
         # Старт -
         # Настройка -
         # Готов *
