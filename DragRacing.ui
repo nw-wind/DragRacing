@@ -584,7 +584,7 @@ border: 1px solid black;
          <string>Start</string>
         </property>
         <property name="shortcut">
-         <string>F2</string>
+         <string>F5</string>
         </property>
        </widget>
       </item>
@@ -594,7 +594,7 @@ border: 1px solid black;
          <string>Stop</string>
         </property>
         <property name="shortcut">
-         <string>F3</string>
+         <string>F6</string>
         </property>
        </widget>
       </item>
