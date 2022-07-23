@@ -341,6 +341,7 @@ class Ui(QtWidgets.QMainWindow):
     def start_race(self):
         global reportFile
         global working
+        log.info("Стартую!")
         if working:
             log.info("Хотим старт, а не working.")
             return
@@ -405,6 +406,7 @@ class Ui(QtWidgets.QMainWindow):
 
     def stop_race(self):
         global working
+        log.info("Стопаю!")
         if not working:
             log.info("Хотим стоп, но not working.")
             return
