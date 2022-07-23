@@ -72,7 +72,15 @@ distance = 402.0 * 1000.0
 working = False
 win = None
 
+false_start_enable = True
+
 work_dir = os.path.split(os.path.abspath(os.path.realpath(sys.argv[0])))[0]
+try:
+    with open(f'{work_dir}/nofs') as f:
+        print(readline(f))
+except Exception as e:
+    print(e)
+    false_start_enable = False
 
 # Классы
 
@@ -197,7 +205,7 @@ class Signal(object):
             log.debug(f"Interrupt {self.pin}, count={racer_data[self.pin].rotations}")
         else:
             # Здесь фальстарт!
-            if not working:
+            if false_start_enable and not working:
                 log.warning(f"Missing int call {self.pin} vs {pin} and {racer_data[self.pin].counting}. Фальстарт!")
                 if not racer_data[self.pin].false_start:
                     log.info(f"Гонщик {racer_data[self.pin].name} поспешил!")
