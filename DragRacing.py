@@ -32,8 +32,9 @@ log.setLevel(logging.DEBUG)
 left_pin = 23
 right_pin = 24
 
-# default_input = GPIO.PUD_UP
-default_input = GPIO.PUD_DOWN
+if not MACOSX:
+    # default_input = GPIO.PUD_UP
+    default_input = GPIO.PUD_DOWN
 
 # light_on = 0
 # light_off = 1
@@ -72,15 +73,20 @@ distance = 402.0 * 1000.0
 working = False
 win = None
 
-false_start_enable = True
+false_start_enable = False
 
 work_dir = os.path.split(os.path.abspath(os.path.realpath(sys.argv[0])))[0]
 try:
     with open(f'{work_dir}/nofs') as f:
-        print(readline(f))
+        print(f.readline())
 except Exception as e:
     print(e)
-    false_start_enable = False
+    false_start_enable = True
+
+if false_start_enable:
+    print("Фальстарт включен.")
+else:
+    print("Фальстарт выключен.")
 
 # Классы
 
