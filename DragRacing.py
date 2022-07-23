@@ -111,7 +111,7 @@ class Racer:
         self.false_start = False
 
 
-racer_data = {left_pin: Racer(left_pin), right_pin: Racer(right_pin)}
+racer_data = {left_pin: Racer(left_pin, 'Смелый', 'Коняга'), right_pin: Racer(right_pin, 'Сильный', 'Кабан')}
 
 
 def led_on(led):
@@ -275,6 +275,10 @@ class Ui(QtWidgets.QMainWindow):
         self.stop_app.connect(self.stop_race)
         GPIO.setup(stopKnob, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         GPIO.add_event_detect(stopKnob, GPIO.RISING, callback=self.stop_app.emit, bouncetime=1000)
+        # self.shortcut_start = QShortcut(QKeySequence('F1'), self)
+        # self.shortcut_start.activated.connect(self.start_app)
+        # self.shortcut_stop = QShortcut(QKeySequence('F2'), self)
+        # self.shortcut_stop.activated.connect(self.stop_app)
         # пыщ!
         # self.showMaximized()
         self.showFullScreen()

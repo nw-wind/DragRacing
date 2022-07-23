@@ -565,7 +565,7 @@ border: 1px solid black;
          <string>New</string>
         </property>
         <property name="shortcut">
-         <string>Meta+N</string>
+         <string>F1</string>
         </property>
        </widget>
       </item>
@@ -584,7 +584,7 @@ border: 1px solid black;
          <string>Start</string>
         </property>
         <property name="shortcut">
-         <string>Meta+S</string>
+         <string>F2</string>
         </property>
        </widget>
       </item>
@@ -594,7 +594,7 @@ border: 1px solid black;
          <string>Stop</string>
         </property>
         <property name="shortcut">
-         <string>Meta+F</string>
+         <string>F3</string>
         </property>
        </widget>
       </item>
@@ -604,7 +604,7 @@ border: 1px solid black;
          <string>Exit</string>
         </property>
         <property name="shortcut">
-         <string>Meta+Q</string>
+         <string>F10</string>
         </property>
        </widget>
       </item>
