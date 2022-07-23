@@ -234,7 +234,7 @@ class Worker(QObject):
 
     def run(self):
         pre_start_cleanup()
-        win.startButton.setText("Поехали...")
+        # ### win.startButton.setText("Поехали...")
         for i in range(raceLoops):  # время гонки
             if not working:
                 break
@@ -335,8 +335,8 @@ class Ui(QtWidgets.QMainWindow):
         led_off(startLed)
         led_off(setUpLed)
         led_on(readyLed)
-        self.startButton.setEnabled(True)
-        self.startButton.setText("Старт!")
+        # ### self.startButton.setEnabled(True)
+        # ### self.startButton.setText("Старт!")
         self.stopButton.setEnabled(False)
         self.newButton.setEnabled(True)
 
@@ -389,7 +389,7 @@ class Ui(QtWidgets.QMainWindow):
         self.thread.finished.connect(self.thread.deleteLater)
         self.worker.progress.connect(self.report_progress)
         self.thread.start()
-        self.startButton.setEnabled(False)
+        # ### self.startButton.setEnabled(False)
         self.newButton.setEnabled(False)
         self.stopButton.setEnabled(True)
         self.thread.finished.connect(
