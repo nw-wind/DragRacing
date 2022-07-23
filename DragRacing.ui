@@ -562,7 +562,7 @@ border: 1px solid black;
       <item>
        <widget class="QPushButton" name="newButton">
         <property name="text">
-         <string>New</string>
+         <string>F1 - Новая гонка</string>
         </property>
         <property name="shortcut">
          <string>F1</string>
@@ -581,7 +581,7 @@ border: 1px solid black;
          <bool>false</bool>
         </property>
         <property name="text">
-         <string>Start</string>
+         <string>F5 - Старт!</string>
         </property>
         <property name="shortcut">
          <string>F5</string>
@@ -591,7 +591,7 @@ border: 1px solid black;
       <item>
        <widget class="QPushButton" name="stopButton">
         <property name="text">
-         <string>Stop</string>
+         <string>F6 - Стоп</string>
         </property>
         <property name="shortcut">
          <string>F6</string>
@@ -601,7 +601,7 @@ border: 1px solid black;
       <item>
        <widget class="QPushButton" name="exitButton">
         <property name="text">
-         <string>Exit</string>
+         <string>F10 - Выход</string>
         </property>
         <property name="shortcut">
          <string>F10</string>
